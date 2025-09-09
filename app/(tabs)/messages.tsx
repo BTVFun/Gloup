@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
 
 interface Conversation {
   id: string;
@@ -66,6 +67,17 @@ export default function MessagesScreen() {
   }
 
   useEffect(() => { loadGroups(); }, []);
+
+  useEffect(() => {
+    const ch = supabase
+      .channel('grp-list-activity')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, (payload) => {
+        const gId = (payload.new as any).group_id as string;
+        setGroups(prev => prev.map(g => g.id === gId ? { ...g, lastActivity: "à l'instant" } : g));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   async function join(groupId: string) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -153,7 +165,7 @@ export default function MessagesScreen() {
         ) : (
           <>
             {groups.map((group) => (
-              <TouchableOpacity key={group.id} style={styles.groupItem}>
+              <TouchableOpacity key={group.id} style={styles.groupItem} onPress={() => router.push({ pathname: '/(tabs)/group/[id]', params: { id: group.id } } as any)}>
                 <Image source={{ uri: group.image }} style={styles.groupImage} />
                 
                 <View style={styles.groupContent}>

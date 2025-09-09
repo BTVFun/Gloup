@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Settings, CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
 
 interface UserStats {
   glowPoints: number;
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
         style={styles.header}
       >
         <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/(tabs)/profile-edit' as any)}>
             <Edit size={24} color="white" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton}>
@@ -220,6 +221,10 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.supportButton}>
           <Text style={styles.supportButtonText}>❤️ Soutenir GlowUp</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.supportButton, { backgroundColor: '#ef4444' }]} onPress={async () => { await supabase.auth.signOut(); }}>
+          <Text style={styles.supportButtonText}>↩︎ Se déconnecter</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
