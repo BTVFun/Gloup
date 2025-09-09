@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface Conversation {
   id: string;
@@ -24,72 +25,55 @@ interface Group {
   category: string;
 }
 
-const mockConversations: Conversation[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Marie L.',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      isOnline: true,
-    },
-    lastMessage: 'Merci pour tes encouragements ! 🙏',
-    timestamp: '2min',
-    unread: true,
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Alex R.',
-      avatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150',
-      isOnline: false,
-    },
-    lastMessage: 'Tu as des conseils pour la méditation ?',
-    timestamp: '1h',
-    unread: false,
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Sarah K.',
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-      isOnline: true,
-    },
-    lastMessage: 'J\'ai adoré ton post sur le yoga !',
-    timestamp: '3h',
-    unread: false,
-  },
-];
+const mockConversations: Conversation[] = [];
 
-const mockGroups: Group[] = [
-  {
-    id: '1',
-    name: 'Yoga & Méditation',
-    members: 248,
-    lastActivity: '15min',
-    image: 'https://images.pexels.com/photos/317157/pexels-photo-317157.jpeg?auto=compress&cs=tinysrgb&w=150',
-    category: 'Mental',
-  },
-  {
-    id: '2',
-    name: 'Fitness Motivation',
-    members: 592,
-    lastActivity: '32min',
-    image: 'https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=150',
-    category: 'Sport',
-  },
-  {
-    id: '3',
-    name: 'Style & Confiance',
-    members: 324,
-    lastActivity: '1h',
-    image: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-    category: 'Style',
-  },
-];
+const mockGroups: Group[] = [];
 
 export default function MessagesScreen() {
   const [activeTab, setActiveTab] = useState<'messages' | 'groups'>('messages');
   const [searchQuery, setSearchQuery] = useState('');
+  const [groups, setGroups] = useState<Group[]>(mockGroups);
+  const [memberships, setMemberships] = useState<Record<string, boolean>>({});
+
+  async function loadGroups() {
+    const { data: list, error } = await supabase.from('groups').select('id, name, category, image_url');
+    if (error) { console.error(error); return; }
+    // Count members per group (approx v1)
+    const ids = list.map(g => g.id);
+    const { data: gm } = await supabase.from('group_members').select('group_id').in('group_id', ids);
+    const counts: Record<string, number> = {};
+    gm?.forEach(m => { counts[m.group_id] = (counts[m.group_id] ?? 0) + 1; });
+    const mapped: Group[] = list.map(g => ({
+      id: g.id,
+      name: g.name,
+      category: g.category ?? '',
+      image: g.image_url ?? 'https://placehold.co/100x100/png',
+      members: counts[g.id] ?? 0,
+      lastActivity: '—',
+    }));
+    setGroups(mapped);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: my } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', user.id);
+      const map: Record<string, boolean> = {};
+      my?.forEach(m => { map[m.group_id] = true; });
+      setMemberships(map);
+    }
+  }
+
+  useEffect(() => { loadGroups(); }, []);
+
+  async function join(groupId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter.');
+    const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id });
+    if (error && (error as any).code !== '23505') return Alert.alert('Erreur', error.message);
+    setMemberships(prev => ({ ...prev, [groupId]: true }));
+  }
 
   return (
     <View style={styles.container}>
@@ -168,7 +152,7 @@ export default function MessagesScreen() {
           </>
         ) : (
           <>
-            {mockGroups.map((group) => (
+            {groups.map((group) => (
               <TouchableOpacity key={group.id} style={styles.groupItem}>
                 <Image source={{ uri: group.image }} style={styles.groupImage} />
                 
@@ -182,9 +166,15 @@ export default function MessagesScreen() {
                   </Text>
                 </View>
                 
-                <View style={styles.joinButton}>
-                  <Text style={styles.joinButtonText}>Rejoindre</Text>
-                </View>
+                {memberships[group.id] ? (
+                  <View style={[styles.joinButton, { backgroundColor: '#10B981' }]}>
+                    <Text style={styles.joinButtonText}>Membre</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.joinButton} onPress={() => join(group.id)}>
+                    <Text style={styles.joinButtonText}>Rejoindre</Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             ))}
             

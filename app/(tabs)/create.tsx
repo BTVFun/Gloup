@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Camera, Image as ImageIcon, Type, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles } from 'lucide-react-native';
 import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '@/lib/supabase';
 
 const glowCategories = [
   { id: 'couronne', icon: Crown, title: 'Moment de fierté', color: '#FFD700' },
@@ -16,6 +18,56 @@ export default function CreateScreen() {
   const [postType, setPostType] = useState<'photo' | 'video' | 'text'>('photo');
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function chooseMedia() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) return Alert.alert('Permission', 'Autorisez l’accès à la galerie.');
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.All, quality: 0.9 });
+    if (!res.canceled) setAsset(res.assets[0]);
+  }
+
+  async function publish() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter.');
+    if (!selectedCategory) return Alert.alert('Catégorie', 'Choisissez une catégorie.');
+    try {
+      setUploading(true);
+      let media_url: string | undefined;
+      let media_kind: 'photo' | 'video' | 'none' = 'none';
+      if (asset && postType !== 'text') {
+        const path = `${user.id}/${Date.now()}-${asset.fileName ?? 'media'}`;
+        const resp = await fetch(asset.uri);
+        const blob = await resp.blob();
+        const { error: upErr } = await supabase.storage.from('posts').upload(path, blob, {
+          contentType: asset.mimeType ?? (postType === 'video' ? 'video/mp4' : 'image/jpeg'),
+        });
+        if (upErr) throw upErr;
+        const { data } = supabase.storage.from('posts').getPublicUrl(path);
+        media_url = data.publicUrl;
+        media_kind = postType === 'video' ? 'video' : 'photo';
+      }
+
+      const { error: insErr } = await supabase.from('posts').insert({
+        author_id: user.id,
+        content,
+        media_url,
+        media_kind,
+        category: selectedCategory,
+        privacy: 'public',
+      });
+      if (insErr) throw insErr;
+      Alert.alert('Publié', 'Votre Glow a été publié ✨');
+      setContent('');
+      setAsset(null);
+      setSelectedCategory(null);
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message ?? 'Échec de la publication');
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -64,11 +116,17 @@ export default function CreateScreen() {
         {postType !== 'text' && (
           <View style={styles.mediaSection}>
             <View style={styles.mediaPlaceholder}>
-              <Camera size={48} color="#9CA3AF" />
-              <Text style={styles.mediaPlaceholderText}>
-                {postType === 'photo' ? 'Prendre une photo' : 'Enregistrer une vidéo'}
-              </Text>
-              <TouchableOpacity style={styles.mediaButton}>
+              {asset ? (
+                <Image source={{ uri: asset.uri }} style={{ width: '100%', height: '100%', borderRadius: 12 }} />
+              ) : (
+                <>
+                  <Camera size={48} color="#9CA3AF" />
+                  <Text style={styles.mediaPlaceholderText}>
+                    {postType === 'photo' ? 'Prendre une photo' : 'Enregistrer une vidéo'}
+                  </Text>
+                </>
+              )}
+              <TouchableOpacity style={styles.mediaButton} onPress={chooseMedia}>
                 <Text style={styles.mediaButtonText}>Choisir depuis la galerie</Text>
               </TouchableOpacity>
             </View>
@@ -136,8 +194,8 @@ export default function CreateScreen() {
           colors={['#8B5CF6', '#3B82F6']}
           style={styles.publishButton}
         >
-          <TouchableOpacity style={styles.publishButtonInner}>
-            <Text style={styles.publishButtonText}>Publier votre Glow ✨</Text>
+          <TouchableOpacity style={styles.publishButtonInner} onPress={publish} disabled={uploading}>
+            <Text style={styles.publishButtonText}>{uploading ? 'Publication…' : 'Publier votre Glow ✨'}</Text>
           </TouchableOpacity>
         </LinearGradient>
 

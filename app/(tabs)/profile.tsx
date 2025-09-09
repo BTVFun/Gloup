@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Settings, CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface UserStats {
   glowPoints: number;
@@ -10,13 +12,7 @@ interface UserStats {
   reactions: number;
 }
 
-const userStats: UserStats = {
-  glowPoints: 3420,
-  posts: 28,
-  followers: 1250,
-  following: 380,
-  reactions: 2840,
-};
+const defaultStats: UserStats = { glowPoints: 0, posts: 0, followers: 0, following: 0, reactions: 0 };
 
 const achievements = [
   { id: '1', title: 'Premier Glow', icon: Sparkles, color: '#FFD700', earned: true },
@@ -56,6 +52,35 @@ const recentPosts = [
 ];
 
 export default function ProfileScreen() {
+  const [profile, setProfile] = useState<{full_name?: string|null; avatar_url?: string|null; bio?: string|null; glow_points?: number|null}>({});
+  const [userStats, setUserStats] = useState<UserStats>(defaultStats);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: pf } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, bio, glow_points')
+        .eq('id', user.id)
+        .single();
+      setProfile(pf ?? {});
+
+      const { count } = await supabase
+        .from('posts')
+        .select('id', { count: 'exact', head: true })
+        .eq('author_id', user.id);
+
+      setUserStats({
+        glowPoints: pf?.glow_points ?? 0,
+        posts: count ?? 0,
+        followers: 0,
+        following: 0,
+        reactions: pf?.glow_points ?? 0,
+      });
+    })();
+  }, []);
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <LinearGradient
@@ -73,13 +98,13 @@ export default function ProfileScreen() {
 
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200' }}
+            source={{ uri: profile.avatar_url ?? 'https://placehold.co/200x200/png' }}
             style={styles.profileImage}
           />
           
-          <Text style={styles.profileName}>Emma Martin</Text>
+          <Text style={styles.profileName}>{profile.full_name ?? 'Mon profil'}</Text>
           <Text style={styles.profileBio}>
-            ✨ En route vers ma meilleure version • Yoga & développement personnel • Partage de bonnes vibes
+            {profile.bio ?? 'Bienvenue sur GlowUp ✨'}
           </Text>
 
           <View style={styles.glowPointsContainer}>

@@ -1,71 +1,24 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-interface Post {
+type ReactionKind = 'couronne' | 'vetements' | 'sport' | 'mental' | 'confiance' | 'soins';
+
+type FeedPost = {
   id: string;
-  user: {
+  author: {
     name: string;
     avatar: string;
     glowPoints: number;
   };
   content: string;
-  image: string;
+  image?: string;
   glowPoints: number;
-  reactions: {
-    couronne: number;
-    vetements: number;
-    sport: number;
-    mental: number;
-    confiance: number;
-    soins: number;
-  };
+  reactions: Record<ReactionKind, number>;
   timestamp: string;
-}
-
-const mockPosts: Post[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Marie L.',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      glowPoints: 2840,
-    },
-    content: 'Premier cours de yoga ce matin ! Je me sens tellement bien et centrée 🧘‍♀️ Merci à tous pour vos encouragements hier !',
-    image: 'https://images.pexels.com/photos/317157/pexels-photo-317157.jpeg?auto=compress&cs=tinysrgb&w=400',
-    glowPoints: 156,
-    reactions: {
-      couronne: 3,
-      vetements: 0,
-      sport: 12,
-      mental: 8,
-      confiance: 5,
-      soins: 4,
-    },
-    timestamp: '2h',
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Alex R.',
-      avatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150',
-      glowPoints: 1920,
-    },
-    content: 'Nouvelle coupe de cheveux ! Je me sens enfin aligné avec qui je suis vraiment ✨',
-    image: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
-    glowPoints: 89,
-    reactions: {
-      couronne: 1,
-      vetements: 7,
-      sport: 0,
-      mental: 3,
-      confiance: 6,
-      soins: 2,
-    },
-    timestamp: '4h',
-  },
-];
+};
 
 const reactionIcons = {
   couronne: { icon: Crown, color: '#FFD700', points: 20 },
@@ -77,23 +30,87 @@ const reactionIcons = {
 };
 
 export default function GlowFeed() {
-  const [posts, setPosts] = useState(mockPosts);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleReaction = (postId: string, reactionType: keyof typeof reactionIcons) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId
-          ? {
-              ...post,
-              reactions: {
-                ...post.reactions,
-                [reactionType]: post.reactions[reactionType] + 1,
-              },
-              glowPoints: post.glowPoints + reactionIcons[reactionType].points,
-            }
-          : post
-      )
-    );
+  async function fetchFeed() {
+    setLoading(true);
+    const { data: rows, error } = await supabase
+      .from('posts')
+      .select(`
+        id, content, media_url, glow_points, created_at,
+        profiles:author_id ( username, avatar_url, glow_points )
+      `)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
+
+    const postIds = rows.map((r: any) => r.id);
+    const { data: allReacts } = await supabase
+      .from('reactions')
+      .select('post_id, kind')
+      .in('post_id', postIds);
+
+    const reactMap = new Map<string, Record<ReactionKind, number>>();
+    for (const id of postIds) {
+      reactMap.set(id, {
+        couronne: 0, vetements: 0, sport: 0, mental: 0, confiance: 0, soins: 0,
+      });
+    }
+    (allReacts ?? []).forEach((r: any) => {
+      const entry = reactMap.get(r.post_id)!;
+      entry[r.kind as ReactionKind] += 1;
+    });
+
+    const mapped: FeedPost[] = rows.map((r: any) => ({
+      id: r.id,
+      author: {
+        name: r.profiles?.username ?? 'Utilisateur',
+        avatar: r.profiles?.avatar_url ?? 'https://placehold.co/100x100/png',
+        glowPoints: r.profiles?.glow_points ?? 0,
+      },
+      content: r.content ?? '',
+      image: r.media_url ?? undefined,
+      glowPoints: r.glow_points ?? 0,
+      reactions: reactMap.get(r.id)!,
+      timestamp: timeSince(new Date(r.created_at)),
+    }));
+
+    setPosts(mapped);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchFeed();
+    const channel = supabase
+      .channel('reactions-feed')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => fetchFeed())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleReaction = async (postId: string, reactionType: keyof typeof reactionIcons) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter pour réagir.');
+    const { error } = await supabase
+      .from('reactions')
+      .insert({ post_id: postId, user_id: user.id, kind: reactionType as ReactionKind });
+    if (error && (error as any).code !== '23505') {
+      // 23505: duplicate unique (déjà réagi)
+      Alert.alert('Erreur', error.message);
+    } else {
+      // Optimiste local
+      setPosts(prev => prev.map(p => p.id === postId ? {
+        ...p,
+        reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
+        glowPoints: p.glowPoints + reactionIcons[reactionType].points,
+      } : p));
+    }
   };
 
   return (
@@ -107,14 +124,16 @@ export default function GlowFeed() {
       </LinearGradient>
 
       <View style={styles.postsContainer}>
-        {posts.map((post) => (
+        {loading ? (
+          <Text style={{ textAlign: 'center', color: '#6B7280' }}>Chargement…</Text>
+        ) : posts.map((post) => (
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
-              <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+              <Image source={{ uri: post.author.avatar }} style={styles.avatar} />
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>{post.user.name}</Text>
+                <Text style={styles.userName}>{post.author.name}</Text>
                 <View style={styles.glowPointsContainer}>
-                  <Text style={styles.glowPoints}>{post.user.glowPoints} Glow Points</Text>
+                  <Text style={styles.glowPoints}>{post.author.glowPoints} Glow Points</Text>
                   <Sparkles size={14} color="#FFD700" />
                 </View>
               </View>
@@ -123,7 +142,7 @@ export default function GlowFeed() {
 
             <Text style={styles.postContent}>{post.content}</Text>
             
-            <Image source={{ uri: post.image }} style={styles.postImage} />
+            {!!post.image && (<Image source={{ uri: post.image }} style={styles.postImage} />)}
 
             <View style={styles.reactionsContainer}>
               <Text style={styles.totalPoints}>+{post.glowPoints} Glow Points</Text>
@@ -290,3 +309,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+function timeSince(date: Date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const intervals: [number, string][] = [[3600*24, 'j'], [3600, 'h'], [60, 'min']];
+  for (const [s, label] of intervals) {
+    const v = Math.floor(seconds / s);
+    if (v >= 1) return `${v}${label}`;
+  }
+  return `${seconds}s`;
+}

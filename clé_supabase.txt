@@ -1,0 +1,2 @@
+URL = https://qsoutgrmvpyrazuygoeo.supabase.co
+anon key = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzb3V0Z3JtdnB5cmF6dXlnb2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjY4OTIsImV4cCI6MjA3MzAwMjg5Mn0.6-OFiWeus-Z-4PV8-6BAhGZSS2LrN9GQKnTKqekMKNk
