@@ -1,214 +1,90 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, Plus } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { Plus } from 'lucide-react-native';
+import { FlashList } from '@shopify/flash-list';
+import { PostCard } from '@/components/ui/PostCard';
+import { useFeed } from '@/hooks/useFeed';
+import { AnalyticsManager } from '@/lib/analytics';
 import { router } from 'expo-router';
-
-type ReactionKind = 'couronne' | 'vetements' | 'sport' | 'mental' | 'confiance' | 'soins';
-
-type FeedPost = {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-    glowPoints: number;
-  };
-  content: string;
-  image?: string;
-  glowPoints: number;
-  reactions: Record<ReactionKind, number>;
-  userHasReacted: ReactionKind[];
-  timestamp: string;
-};
-
-const reactionIcons = {
-  couronne: { icon: Crown, color: '#FFD700', points: 20 },
-  vetements: { icon: Shirt, color: '#8B5CF6', points: 10 },
-  sport: { icon: Dumbbell, color: '#EF4444', points: 10 },
-  mental: { icon: Brain, color: '#10B981', points: 10 },
-  confiance: { icon: Shield, color: '#F59E0B', points: 10 },
-  soins: { icon: Sparkles, color: '#EC4899', points: 10 },
-};
+import { useEffect } from 'react';
 
 export default function GlowFeed() {
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function fetchFeed() {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const { data: rows, error } = await supabase
-      .from('posts')
-      .select(`
-        id, content, media_url, glow_points, created_at,
-        profiles:author_id ( username, avatar_url, glow_points )
-      `)
-      .order('created_at', { ascending: false });
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
-
-    const postIds = rows.map((r: any) => r.id);
-    const { data: allReacts } = await supabase
-      .from('reactions')
-      .select('post_id, kind')
-      .in('post_id', postIds);
-
-    // Get current user's reactions
-    const { data: userReacts } = user ? await supabase
-      .from('reactions')
-      .select('post_id, kind')
-      .in('post_id', postIds)
-      .eq('user_id', user.id) : { data: [] };
-
-    const reactMap = new Map<string, Record<ReactionKind, number>>();
-    const userReactMap = new Map<string, ReactionKind[]>();
-    for (const id of postIds) {
-      reactMap.set(id, {
-        couronne: 0, vetements: 0, sport: 0, mental: 0, confiance: 0, soins: 0,
-      });
-      userReactMap.set(id, []);
-    }
-    (allReacts ?? []).forEach((r: any) => {
-      const entry = reactMap.get(r.post_id)!;
-      entry[r.kind as ReactionKind] += 1;
-    });
-    (userReacts ?? []).forEach((r: any) => {
-      const entry = userReactMap.get(r.post_id)!;
-      entry.push(r.kind as ReactionKind);
-    });
-
-    const mapped: FeedPost[] = rows.map((r: any) => ({
-      id: r.id,
-      author: {
-        name: r.profiles?.username ?? 'Utilisateur',
-        avatar: r.profiles?.avatar_url ?? 'https://placehold.co/100x100/png',
-        glowPoints: r.profiles?.glow_points ?? 0,
-      },
-      content: r.content ?? '',
-      image: r.media_url ?? undefined,
-      glowPoints: r.glow_points ?? 0,
-      reactions: reactMap.get(r.id)!,
-      userHasReacted: userReactMap.get(r.id)!,
-      timestamp: timeSince(new Date(r.created_at)),
-    }));
-
-    setPosts(mapped);
-    setLoading(false);
-  }
+  const {
+    posts,
+    loading,
+    refreshing,
+    hasMore,
+    error,
+    loadMore,
+    refresh,
+    handleReaction,
+    handleComment,
+    handleShare,
+    handleUserPress,
+  } = useFeed();
 
   useEffect(() => {
-    fetchFeed();
-    const channel = supabase
-      .channel('reactions-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => fetchFeed())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    AnalyticsManager.trackScreenView('feed');
   }, []);
 
-  const handleReaction = async (postId: string, reactionType: keyof typeof reactionIcons) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter pour réagir.');
-    
-    // Check if user has already reacted with this type
-    const post = posts.find(p => p.id === postId);
-    if (post?.userHasReacted.includes(reactionType as ReactionKind)) {
-      Alert.alert('Déjà réagi', 'Vous avez déjà réagi avec ce type de Glow.');
-      return;
-    }
-    
-    const { error } = await supabase
-      .from('reactions')
-      .insert({ post_id: postId, user_id: user.id, kind: reactionType as ReactionKind });
-    
-    if (error) {
-      Alert.alert('Erreur', error.message);
-      return;
-    }
-    
-    // Update UI after successful insertion
-    setPosts(prev => prev.map(p => p.id === postId ? {
-      ...p,
-      reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
-      glowPoints: p.glowPoints + reactionIcons[reactionType].points,
-      userHasReacted: [...p.userHasReacted, reactionType as ReactionKind],
-    } : p));
+  const renderPost = ({ item }: { item: any }) => (
+    <PostCard
+      post={item}
+      onReaction={handleReaction}
+      onComment={handleComment}
+      onShare={handleShare}
+      onUserPress={handleUserPress}
+    />
+  );
+
+  const renderHeader = () => (
+    <LinearGradient
+      colors={['#8B5CF6', '#3B82F6']}
+      style={styles.header}
+    >
+      <Text style={styles.title}>GlowUp</Text>
+      <Text style={styles.subtitle}>Together</Text>
+    </LinearGradient>
+  );
+
+  const renderFooter = () => {
+    if (!loading || posts.length === 0) return null;
+    return (
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Chargement...</Text>
+      </View>
+    );
+  };
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyTitle}>Aucun post à afficher</Text>
+        <Text style={styles.emptyText}>
+          Soyez le premier à partager quelque chose !
+        </Text>
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={['#8B5CF6', '#3B82F6']}
-        style={styles.header}
-      >
-        <Text style={styles.title}>GlowUp</Text>
-        <Text style={styles.subtitle}>Together</Text>
-      </LinearGradient>
-
-      <View style={styles.postsContainer}>
-        {loading ? (
-          <Text style={{ textAlign: 'center', color: '#6B7280' }}>Chargement…</Text>
-        ) : posts.map((post) => (
-          <View key={post.id} style={styles.postCard}>
-            <View style={styles.postHeader}>
-              <Image source={{ uri: post.author.avatar }} style={styles.avatar} />
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{post.author.name}</Text>
-                <View style={styles.glowPointsContainer}>
-                  <Text style={styles.glowPoints}>{post.author.glowPoints} Glow Points</Text>
-                  <Sparkles size={14} color="#FFD700" />
-                </View>
-              </View>
-              <Text style={styles.timestamp}>{post.timestamp}</Text>
-            </View>
-
-            <Text style={styles.postContent}>{post.content}</Text>
-            
-            {!!post.image && (<Image source={{ uri: post.image }} style={styles.postImage} />)}
-
-            <View style={styles.reactionsContainer}>
-              <Text style={styles.totalPoints}>+{post.glowPoints} Glow Points</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reactionButtons}>
-                {Object.entries(reactionIcons).map(([key, { icon: Icon, color }]) => (
-                  <Pressable
-                    key={key}
-                    style={[styles.reactionButton, { borderColor: color }]}
-                    onPress={() => handleReaction(post.id, key as keyof typeof reactionIcons)}
-                  >
-                    <Icon size={20} color={color} />
-                    <Text style={[styles.reactionCount, { color }]}>
-                      {post.reactions[key as keyof typeof post.reactions]}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Heart size={20} color="#6B7280" />
-                <Text style={styles.actionText}>Encourager</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <MessageCircle size={20} color="#6B7280" />
-                <Text style={styles.actionText}>Commenter</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Share size={20} color="#6B7280" />
-                <Text style={styles.actionText}>Partager</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </View>
-      </ScrollView>
+      <FlashList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmpty}
+        onEndReached={hasMore ? loadMore : undefined}
+        onEndReachedThreshold={0.5}
+        onRefresh={refresh}
+        refreshing={refreshing}
+        estimatedItemSize={300}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+      />
 
       <TouchableOpacity 
         style={styles.floatingButton}
@@ -230,11 +106,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  listContent: {
+    paddingHorizontal: 16,
+  },
   header: {
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 30,
+    marginHorizontal: -16,
     paddingHorizontal: 20,
     alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,
@@ -247,108 +128,28 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
   },
-  postsContainer: {
-    padding: 16,
-  },
-  postCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  postHeader: {
-    flexDirection: 'row',
+  footer: {
+    paddingVertical: 20,
     alignItems: 'center',
-    marginBottom: 12,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  glowPointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  glowPoints: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginRight: 4,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  postContent: {
-    fontSize: 15,
-    color: '#374151',
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  reactionsContainer: {
-    marginBottom: 12,
-  },
-  totalPoints: {
+  footerText: {
     fontSize: 14,
+    color: '#6B7280',
+  },
+  empty: {
+    paddingVertical: 60,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#6B7280',
     marginBottom: 8,
   },
-  reactionButtons: {
-    flexDirection: 'row',
-  },
-  reactionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
-    backgroundColor: '#F9FAFB',
-  },
-  reactionCount: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionText: {
+  emptyText: {
     fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 6,
-    fontWeight: '500',
+    color: '#9CA3AF',
+    textAlign: 'center',
   },
   floatingButton: {
     position: 'absolute',
@@ -371,13 +172,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
-function timeSince(date: Date) {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  const intervals: [number, string][] = [[3600*24, 'j'], [3600, 'h'], [60, 'min']];
-  for (const [s, label] of intervals) {
-    const v = Math.floor(seconds / s);
-    if (v >= 1) return `${v}${label}`;
-  }
-  return `${seconds}s`;
-}
