@@ -1,20 +1,19 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
+import { Search, MessageCircle, Users, Heart, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 
-interface Conversation {
+interface DirectMessage {
   id: string;
-  user: {
-    name: string;
-    avatar: string;
-    isOnline: boolean;
-  };
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
+  content: string;
+  created_at: string;
+  sender_id: string;
+  receiver_id: string;
+  read_at: string | null;
+  sender?: { username?: string; avatar_url?: string };
+  receiver?: { username?: string; avatar_url?: string };
 }
 
 interface Group {
@@ -26,7 +25,18 @@ interface Group {
   category: string;
 }
 
-const mockConversations: Conversation[] = [];
+interface Conversation {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string;
+    isOnline: boolean;
+  };
+  lastMessage: string;
+  timestamp: string;
+  unread: boolean;
+}
 
 const mockGroups: Group[] = [];
 
@@ -35,6 +45,8 @@ export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>(mockGroups);
   const [memberships, setMemberships] = useState<Record<string, boolean>>({});
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   async function loadGroups() {
     const { data: list, error } = await supabase.from('groups').select('id, name, category, image_url');
@@ -61,12 +73,57 @@ export default function MessagesScreen() {
         .select('group_id')
         .eq('user_id', user.id);
       const map: Record<string, boolean> = {};
+  async function loadConversations() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Récupérer les derniers messages pour chaque conversation
+    const { data: messages, error } = await supabase
+      .from('direct_messages')
+      .select(`
+        id, content, created_at, sender_id, receiver_id, read_at,
+        sender:profiles!direct_messages_sender_id_fkey(username, avatar_url),
+        receiver:profiles!direct_messages_receiver_id_fkey(username, avatar_url)
+      `)
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .order('created_at', { ascending: false });
       my?.forEach(m => { map[m.group_id] = true; });
-      setMemberships(map);
+    if (error) {
+      console.error('Erreur chargement conversations:', error);
+      return;
     }
+      setMemberships(map);
+    // Grouper par conversation et garder le dernier message
+    const conversationMap = new Map<string, DirectMessage>();
+    messages?.forEach((msg: any) => {
+      const otherUserId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+      if (!conversationMap.has(otherUserId)) {
+        conversationMap.set(otherUserId, msg);
+      }
+    });
+    }
+    const convs: Conversation[] = Array.from(conversationMap.values()).map((msg: any) => {
+      const isFromMe = msg.sender_id === user.id;
+      const otherUser = isFromMe ? msg.receiver : msg.sender;
+      return {
+        id: isFromMe ? msg.receiver_id : msg.sender_id,
+        user: {
+          id: isFromMe ? msg.receiver_id : msg.sender_id,
+          name: otherUser?.username || 'Utilisateur',
+          avatar: otherUser?.avatar_url || 'https://placehold.co/100x100/png',
+          isOnline: false,
+        },
+        lastMessage: msg.content,
+        timestamp: timeSince(new Date(msg.created_at)),
+        unread: !isFromMe && !msg.read_at,
+      };
+    });
+  }
+    setConversations(convs);
   }
 
   useEffect(() => { loadGroups(); }, []);
+  useEffect(() => { loadConversations(); }, []);
 
   useEffect(() => {
     const ch = supabase
@@ -87,6 +144,24 @@ export default function MessagesScreen() {
     setMemberships(prev => ({ ...prev, [groupId]: true }));
   }
 
+  async function createGroup(name: string, category: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Alert.alert('Connexion requise');
+    
+    const { data: group, error } = await supabase
+      .from('groups')
+      .insert({ name, category, created_by: user.id })
+      .select()
+      .single();
+    
+    if (error) return Alert.alert('Erreur', error.message);
+    
+    // Rejoindre automatiquement le groupe créé
+    await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'admin' });
+    
+    loadGroups();
+    setShowCreateGroup(false);
+  }
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -133,7 +208,7 @@ export default function MessagesScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {activeTab === 'messages' ? (
           <>
-            {mockConversations.map((conversation) => (
+            {conversations.map((conversation) => (
               <TouchableOpacity key={conversation.id} style={styles.conversationItem}>
                 <View style={styles.avatarContainer}>
                   <Image source={{ uri: conversation.user.avatar }} style={styles.avatar} />
@@ -194,17 +269,20 @@ export default function MessagesScreen() {
               <LinearGradient
                 colors={['#F59E0B', '#F97316']}
                 style={styles.createGroupGradient}
+                onPress={() => router.push({ pathname: '/(tabs)/chat/[id]', params: { id: conversation.user.id } } as any)}
               >
                 <Users size={32} color="white" />
                 <Text style={styles.createGroupTitle}>Créer un groupe</Text>
                 <Text style={styles.createGroupText}>
-                  Rassemblez des personnes autour de vos passions
+            {conversations.length === 0 && (
+              <View style={styles.emptyState}>
+                <Heart size={48} color="#E5E7EB" />
+                <Text style={styles.emptyStateTitle}>Aucune conversation</Text>
+                <Text style={styles.emptyStateText}>
+                  Interagissez avec des posts pour commencer de nouvelles conversations !
                 </Text>
-                <TouchableOpacity style={styles.createGroupButton}>
-                  <Text style={styles.createGroupButtonText}>Commencer</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -234,21 +312,24 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
     marginBottom: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    width: '100%',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: 'white',
+            <TouchableOpacity 
+              style={styles.createGroupCard}
+              onPress={() => router.push('/(tabs)/create-group' as any)}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#F97316']}
+                style={styles.createGroupGradient}
+              >
+                <Users size={32} color="white" />
+                <Text style={styles.createGroupTitle}>Créer un groupe</Text>
+                <Text style={styles.createGroupText}>
+                  Rassemblez des personnes autour de vos passions
+                </Text>
+                <View style={styles.createGroupButton}>
+                  <Text style={styles.createGroupButtonText}>Commencer</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
   },
   tabContainer: {
     flexDirection: 'row',
@@ -463,3 +544,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
 });
+
+function timeSince(date: Date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const intervals: [number, string][] = [[3600*24, 'j'], [3600, 'h'], [60, 'min']];
+  for (const [s, label] of intervals) {
+    const v = Math.floor(seconds / s);
+    if (v >= 1) return `${v}${label}`;
+  }
+  return `${seconds}s`;
+}
