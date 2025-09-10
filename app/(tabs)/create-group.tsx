@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Users, Hash } from 'lucide-react-native';
+import { ArrowLeft, Users, Hash, Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
@@ -168,6 +168,18 @@ export default function CreateGroupScreen() {
             </Text>
           </TouchableOpacity>
         </LinearGradient>
+
+        <TouchableOpacity 
+          style={styles.floatingButton}
+          onPress={() => router.push('/(tabs)/messages' as any)}
+        >
+          <LinearGradient
+            colors={['#8B5CF6', '#3B82F6']}
+            style={styles.floatingButtonGradient}
+          >
+            <Plus size={24} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -311,5 +323,25 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

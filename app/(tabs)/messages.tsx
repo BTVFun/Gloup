@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
+import { Search, MessageCircle, Users, Heart, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
@@ -294,6 +294,18 @@ export default function MessagesScreen() {
           </>
         )}
       </ScrollView>
+
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => router.push('/(tabs)/create-group' as any)}
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#3B82F6']}
+          style={styles.floatingButtonGradient}
+        >
+          <Plus size={24} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -547,6 +559,26 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

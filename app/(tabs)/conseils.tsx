@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart as Heart2, Dumbbell, Brain, Palette, BookOpen, Utensils } from 'lucide-react-native';
+import { Heart as Heart2, Dumbbell, Brain, Palette, BookOpen, Utensils, Plus } from 'lucide-react-native';
 
 const categories = [
   {
@@ -150,6 +150,18 @@ export default function ConseilsScreen() {
           </LinearGradient>
         </View>
       </View>
+
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => router.push('/(tabs)/create' as any)}
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#3B82F6']}
+          style={styles.floatingButtonGradient}
+        >
+          <Plus size={24} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -312,5 +324,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
