@@ -288,10 +288,6 @@ export default function MessagesScreen() {
                   <TouchableOpacity style={styles.joinButton} onPress={() => join(group.id)}>
                     <Text style={styles.joinButtonText}>Rejoindre</Text>
                   </TouchableOpacity>
-                )}
-              </TouchableOpacity>
-            ))}
-          </>
         )}
       </ScrollView>
     </View>
