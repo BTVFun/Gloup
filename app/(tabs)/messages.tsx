@@ -295,6 +295,10 @@ export default function MessagesScreen() {
             <TouchableOpacity 
               style={styles.createGroupCard}
               onPress={() => {
+                setShowCreateGroup(true);
+              }}
+            >
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
