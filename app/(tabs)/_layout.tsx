@@ -73,17 +73,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="create"
-        options={{
-          title: 'Créer',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={[styles.tabIcon, focused && styles.activeTab]}>
-              <Plus size={size} color={color} />
-            </View>
-          ),
-        }}
-      />
     </Tabs>
   );
 }
