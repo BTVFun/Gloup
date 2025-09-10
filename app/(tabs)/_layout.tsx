@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, BookOpen, MessageCircle, User } from 'lucide-react-native';
+import { Heart, BookOpen, MessageCircle, User, Plus } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -76,7 +76,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          href: null, // Cache cet onglet de la navigation
+          title: 'Créer',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={[styles.tabIcon, focused && styles.activeTab]}>
+              <Plus size={size} color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>

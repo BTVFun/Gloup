@@ -183,18 +183,6 @@ export default function GlowFeed() {
       </View>
       </ScrollView>
       
-      {/* Bouton flottant pour créer un post */}
-      <TouchableOpacity 
-        style={styles.floatingButton}
-        onPress={() => router.push('/(tabs)/create')}
-      >
-        <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
-          style={styles.floatingButtonGradient}
-        >
-          <Plus size={28} color="white" strokeWidth={2.5} />
-        </LinearGradient>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -323,26 +311,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginLeft: 6,
     fontWeight: '500',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  floatingButtonGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 
