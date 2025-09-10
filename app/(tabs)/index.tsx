@@ -18,6 +18,7 @@ type FeedPost = {
   image?: string;
   glowPoints: number;
   reactions: Record<ReactionKind, number>;
+  userHasReacted: ReactionKind[];
   timestamp: string;
 };
 
@@ -36,6 +37,8 @@ export default function GlowFeed() {
 
   async function fetchFeed() {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { data: rows, error } = await supabase
       .from('posts')
       .select(`
@@ -55,15 +58,28 @@ export default function GlowFeed() {
       .select('post_id, kind')
       .in('post_id', postIds);
 
+    // Get current user's reactions
+    const { data: userReacts } = user ? await supabase
+      .from('reactions')
+      .select('post_id, kind')
+      .in('post_id', postIds)
+      .eq('user_id', user.id) : { data: [] };
+
     const reactMap = new Map<string, Record<ReactionKind, number>>();
+    const userReactMap = new Map<string, ReactionKind[]>();
     for (const id of postIds) {
       reactMap.set(id, {
         couronne: 0, vetements: 0, sport: 0, mental: 0, confiance: 0, soins: 0,
       });
+      userReactMap.set(id, []);
     }
     (allReacts ?? []).forEach((r: any) => {
       const entry = reactMap.get(r.post_id)!;
       entry[r.kind as ReactionKind] += 1;
+    });
+    (userReacts ?? []).forEach((r: any) => {
+      const entry = userReactMap.get(r.post_id)!;
+      entry.push(r.kind as ReactionKind);
     });
 
     const mapped: FeedPost[] = rows.map((r: any) => ({
@@ -77,6 +93,7 @@ export default function GlowFeed() {
       image: r.media_url ?? undefined,
       glowPoints: r.glow_points ?? 0,
       reactions: reactMap.get(r.id)!,
+      userHasReacted: userReactMap.get(r.id)!,
       timestamp: timeSince(new Date(r.created_at)),
     }));
 
@@ -99,26 +116,28 @@ export default function GlowFeed() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter pour réagir.');
     
+    // Check if user has already reacted with this type
+    const post = posts.find(p => p.id === postId);
+    if (post?.userHasReacted.includes(reactionType as ReactionKind)) {
+      Alert.alert('Déjà réagi', 'Vous avez déjà réagi avec ce type de Glow.');
+      return;
+    }
+    
     const { error } = await supabase
       .from('reactions')
       .insert({ post_id: postId, user_id: user.id, kind: reactionType as ReactionKind });
     
     if (error) {
-      if ((error as any).code === '23505') {
-        // User already reacted with this type
-        Alert.alert('Déjà réagi', 'Vous avez déjà réagi avec ce type de Glow.');
-        return;
-      }
-      // Other errors
       Alert.alert('Erreur', error.message);
       return;
     }
     
-    // Only update UI if insertion was successful
+    // Update UI after successful insertion
     setPosts(prev => prev.map(p => p.id === postId ? {
       ...p,
       reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
       glowPoints: p.glowPoints + reactionIcons[reactionType].points,
+      userHasReacted: [...p.userHasReacted, reactionType as ReactionKind],
     } : p));
   };
 
