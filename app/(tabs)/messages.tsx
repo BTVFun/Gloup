@@ -73,6 +73,11 @@ export default function MessagesScreen() {
         .select('group_id')
         .eq('user_id', user.id);
       const map: Record<string, boolean> = {};
+      my?.forEach(m => { map[m.group_id] = true; });
+      setMemberships(map);
+    }
+  }
+
   async function loadConversations() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -87,12 +92,12 @@ export default function MessagesScreen() {
       `)
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
-      my?.forEach(m => { map[m.group_id] = true; });
+
     if (error) {
       console.error('Erreur chargement conversations:', error);
       return;
     }
-      setMemberships(map);
+
     // Grouper par conversation et garder le dernier message
     const conversationMap = new Map<string, DirectMessage>();
     messages?.forEach((msg: any) => {
@@ -101,7 +106,7 @@ export default function MessagesScreen() {
         conversationMap.set(otherUserId, msg);
       }
     });
-    }
+
     const convs: Conversation[] = Array.from(conversationMap.values()).map((msg: any) => {
       const isFromMe = msg.sender_id === user.id;
       const otherUser = isFromMe ? msg.receiver : msg.sender;
@@ -118,7 +123,7 @@ export default function MessagesScreen() {
         unread: !isFromMe && !msg.read_at,
       };
     });
-  }
+
     setConversations(convs);
   }
 
@@ -162,6 +167,7 @@ export default function MessagesScreen() {
     loadGroups();
     setShowCreateGroup(false);
   }
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -209,7 +215,7 @@ export default function MessagesScreen() {
         {activeTab === 'messages' ? (
           <>
             {conversations.map((conversation) => (
-              <TouchableOpacity key={conversation.id} style={styles.conversationItem}>
+              <TouchableOpacity key={conversation.id} style={styles.conversationItem} onPress={() => router.push({ pathname: '/(tabs)/chat/[id]', params: { id: conversation.user.id } } as any)}>
                 <View style={styles.avatarContainer}>
                   <Image source={{ uri: conversation.user.avatar }} style={styles.avatar} />
                   {conversation.user.isOnline && <View style={styles.onlineIndicator} />}
@@ -229,13 +235,15 @@ export default function MessagesScreen() {
               </TouchableOpacity>
             ))}
             
-            <View style={styles.emptyState}>
-              <Heart size={48} color="#E5E7EB" />
-              <Text style={styles.emptyStateTitle}>Plus de conversations à venir</Text>
-              <Text style={styles.emptyStateText}>
-                Interagissez avec des posts pour commencer de nouvelles conversations !
-              </Text>
-            </View>
+            {conversations.length === 0 && (
+              <View style={styles.emptyState}>
+                <Heart size={48} color="#E5E7EB" />
+                <Text style={styles.emptyStateTitle}>Aucune conversation</Text>
+                <Text style={styles.emptyStateText}>
+                  Interagissez avec des posts pour commencer de nouvelles conversations !
+                </Text>
+              </View>
+            )}
           </>
         ) : (
           <>
@@ -265,24 +273,24 @@ export default function MessagesScreen() {
               </TouchableOpacity>
             ))}
             
-            <View style={styles.createGroupCard}>
+            <TouchableOpacity 
+              style={styles.createGroupCard}
+              onPress={() => router.push('/(tabs)/create-group' as any)}
+            >
               <LinearGradient
                 colors={['#F59E0B', '#F97316']}
                 style={styles.createGroupGradient}
-                onPress={() => router.push({ pathname: '/(tabs)/chat/[id]', params: { id: conversation.user.id } } as any)}
               >
                 <Users size={32} color="white" />
                 <Text style={styles.createGroupTitle}>Créer un groupe</Text>
                 <Text style={styles.createGroupText}>
-            {conversations.length === 0 && (
-              <View style={styles.emptyState}>
-                <Heart size={48} color="#E5E7EB" />
-                <Text style={styles.emptyStateTitle}>Aucune conversation</Text>
-                <Text style={styles.emptyStateText}>
-                  Interagissez avec des posts pour commencer de nouvelles conversations !
+                  Rassemblez des personnes autour de vos passions
                 </Text>
-              </View>
-            )}
+                <View style={styles.createGroupButton}>
+                  <Text style={styles.createGroupButtonText}>Commencer</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
@@ -312,24 +320,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
     marginBottom: 20,
-            <TouchableOpacity 
-              style={styles.createGroupCard}
-              onPress={() => router.push('/(tabs)/create-group' as any)}
-            >
-              <LinearGradient
-                colors={['#F59E0B', '#F97316']}
-                style={styles.createGroupGradient}
-              >
-                <Users size={32} color="white" />
-                <Text style={styles.createGroupTitle}>Créer un groupe</Text>
-                <Text style={styles.createGroupText}>
-                  Rassemblez des personnes autour de vos passions
-                </Text>
-                <View style={styles.createGroupButton}>
-                  <Text style={styles.createGroupButtonText}>Commencer</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    width: '100%',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: 'white',
   },
   tabContainer: {
     flexDirection: 'row',
