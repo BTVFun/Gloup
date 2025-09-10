@@ -137,18 +137,6 @@ export default function ConseilsScreen() {
           })}
         </View>
 
-        <View style={styles.motivationSection}>
-          <LinearGradient
-            colors={['#F59E0B', '#F97316']}
-            style={styles.motivationCard}
-          >
-            <Text style={styles.motivationTitle}>✨ Citation du jour</Text>
-            <Text style={styles.motivationQuote}>
-              "Le succès n'est pas final, l'échec n'est pas fatal : c'est le courage de continuer qui compte."
-            </Text>
-            <Text style={styles.motivationAuthor}>- Winston Churchill</Text>
-          </LinearGradient>
-        </View>
       </View>
 
       <TouchableOpacity 
@@ -297,33 +285,6 @@ const styles = StyleSheet.create({
   articlesCount: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.7)',
-  },
-  motivationSection: {
-    marginBottom: 20,
-  },
-  motivationCard: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  motivationTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 12,
-  },
-  motivationQuote: {
-    fontSize: 16,
-    color: 'white',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
-  motivationAuthor: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
   },
   floatingButton: {
     position: 'absolute',

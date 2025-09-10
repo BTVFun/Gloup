@@ -297,7 +297,11 @@ export default function MessagesScreen() {
 
       <TouchableOpacity 
         style={styles.floatingButton}
-        onPress={() => router.push('/(tabs)/create-group' as any)}
+        onPress={() => {
+          // TODO: Navigate to user selection page for direct messages
+          // For now, keeping existing functionality until user selection is implemented
+          router.push('/(tabs)/create-group' as any);
+        }}
       >
         <LinearGradient
           colors={['#8B5CF6', '#3B82F6']}

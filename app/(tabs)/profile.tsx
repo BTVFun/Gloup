@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar, Plus, Users, MessageSquare } from 'lucide-react-native';
+import { CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
@@ -227,35 +227,6 @@ export default function ProfileScreen() {
           <Text style={styles.supportButtonText}>↩︎ Se déconnecter</Text>
         </TouchableOpacity>
 
-        <View style={styles.floatingActions}>
-          <TouchableOpacity 
-            style={styles.floatingActionButton}
-            onPress={() => router.push('/(tabs)/create' as any)}
-          >
-            <Plus size={20} color="white" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.floatingActionButton}
-            onPress={() => router.push('/(tabs)/messages' as any)}
-          >
-            <MessageSquare size={20} color="white" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.floatingActionButton}
-            onPress={() => router.push('/(tabs)/create-group' as any)}
-          >
-            <Users size={20} color="white" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.floatingActionButton}
-            onPress={() => router.push('/(tabs)/profile-edit' as any)}
-          >
-            <Edit size={20} color="white" />
-          </TouchableOpacity>
-        </View>
       </View>
       </ScrollView>
     </View>
@@ -480,25 +451,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
-  },
-  floatingActions: {
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    flexDirection: 'column',
-    gap: 12,
-  },
-  floatingActionButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#8B5CF6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
 });
