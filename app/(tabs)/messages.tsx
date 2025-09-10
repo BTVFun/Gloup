@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, MessageCircle, Users, Heart, Plus } from 'lucide-react-native';
+import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';

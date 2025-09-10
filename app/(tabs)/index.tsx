@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, Plus } from 'lucide-react-native';
+import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';

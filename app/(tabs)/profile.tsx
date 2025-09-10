@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Settings, CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar, Plus } from 'lucide-react-native';
+import { CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
