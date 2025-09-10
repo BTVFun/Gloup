@@ -419,3 +419,5 @@ function timeSince(date: Date): string {
   
   return `${seconds}s`;
 }
+
+export { useFeed }
