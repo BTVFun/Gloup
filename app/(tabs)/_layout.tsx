@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Heart, BookOpen, Plus, MessageCircle, User } from 'lucide-react-native';
+import { Heart, BookOpen, MessageCircle, User } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TabLayout() {
   return (
@@ -52,20 +51,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="create"
-        options={{
-          title: 'Créer',
-          tabBarIcon: ({ color, size, focused }) => (
-            <LinearGradient
-              colors={['#8B5CF6', '#3B82F6']}
-              style={styles.createButton}
-            >
-              <Plus size={size} color="white" strokeWidth={3} />
-            </LinearGradient>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
@@ -87,6 +72,50 @@ export default function TabLayout() {
           ),
         }}
       />
+      
+      {/* Écrans cachés de la barre de navigation */}
+      <Tabs.Screen
+        name="create"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="profile-edit"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="create-group"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="group"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="chat/[id]"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="group/[id]"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
     </Tabs>
   );
 }
@@ -98,18 +127,5 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     backgroundColor: '#F3F4F6',
-  },
-  createButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
   },
 });

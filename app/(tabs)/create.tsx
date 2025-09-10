@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Camera, Image as ImageIcon, Type, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, Type, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
 
 const glowCategories = [
   { id: 'couronne', icon: Crown, title: 'Moment de fierté', color: '#FFD700' },
@@ -23,8 +24,13 @@ export default function CreateScreen() {
 
   async function chooseMedia() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return Alert.alert('Permission', 'Autorisez l’accès à la galerie.');
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.All, quality: 0.9 });
+    if (!perm.granted) return Alert.alert('Permission', 'Autorisez l\'accès à la galerie.');
+    const res = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: ImagePicker.MediaTypeOptions.All, 
+      quality: 0.9,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
     if (!res.canceled) setAsset(res.assets[0]);
   }
 
@@ -32,36 +38,55 @@ export default function CreateScreen() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter.');
     if (!selectedCategory) return Alert.alert('Catégorie', 'Choisissez une catégorie.');
+    if (!content.trim() && !asset) return Alert.alert('Contenu', 'Ajoutez du contenu ou une image.');
+    
     try {
       setUploading(true);
       let media_url: string | undefined;
       let media_kind: 'photo' | 'video' | 'none' = 'none';
+      
       if (asset && postType !== 'text') {
-        const path = `${user.id}/${Date.now()}-${asset.fileName ?? 'media'}`;
-        const resp = await fetch(asset.uri);
-        const blob = await resp.blob();
-        const { error: upErr } = await supabase.storage.from('posts').upload(path, blob, {
-          contentType: asset.mimeType ?? (postType === 'video' ? 'video/mp4' : 'image/jpeg'),
-        });
-        if (upErr) throw upErr;
-        const { data } = supabase.storage.from('posts').getPublicUrl(path);
+        const fileExt = asset.uri.split('.').pop()?.toLowerCase();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        
+        const { error: uploadError } = await supabase.storage
+          .from('posts')
+          .upload(filePath, blob, {
+            contentType: asset.mimeType ?? (postType === 'video' ? 'video/mp4' : 'image/jpeg'),
+            upsert: false,
+          });
+        
+        if (uploadError) throw uploadError;
+        
+        const { data } = supabase.storage.from('posts').getPublicUrl(filePath);
         media_url = data.publicUrl;
         media_kind = postType === 'video' ? 'video' : 'photo';
       }
 
-      const { error: insErr } = await supabase.from('posts').insert({
+      const { error: insertError } = await supabase.from('posts').insert({
         author_id: user.id,
-        content,
+        content: content.trim() || null,
         media_url,
         media_kind,
         category: selectedCategory,
         privacy: 'public',
       });
-      if (insErr) throw insErr;
-      Alert.alert('Publié', 'Votre Glow a été publié ✨');
+      
+      if (insertError) throw insertError;
+      
+      Alert.alert('Publié !', 'Votre Glow a été publié avec succès ✨', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+      
+      // Reset form
       setContent('');
       setAsset(null);
       setSelectedCategory(null);
+      
     } catch (e: any) {
       Alert.alert('Erreur', e.message ?? 'Échec de la publication');
     } finally {
@@ -75,7 +100,13 @@ export default function CreateScreen() {
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
       >
-        <Text style={styles.title}>Créer</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Créer</Text>
+          <View style={{ width: 40 }} />
+        </View>
         <Text style={styles.subtitle}>Partagez votre glow moment</Text>
       </LinearGradient>
 
@@ -115,21 +146,19 @@ export default function CreateScreen() {
 
         {postType !== 'text' && (
           <View style={styles.mediaSection}>
-            <View style={styles.mediaPlaceholder}>
+            <TouchableOpacity style={styles.mediaPlaceholder} onPress={chooseMedia}>
               {asset ? (
-                <Image source={{ uri: asset.uri }} style={{ width: '100%', height: '100%', borderRadius: 12 }} />
+                <Image source={{ uri: asset.uri }} style={styles.mediaPreview} />
               ) : (
                 <>
                   <Camera size={48} color="#9CA3AF" />
                   <Text style={styles.mediaPlaceholderText}>
-                    {postType === 'photo' ? 'Prendre une photo' : 'Enregistrer une vidéo'}
+                    {postType === 'photo' ? 'Ajouter une photo' : 'Ajouter une vidéo'}
                   </Text>
+                  <Text style={styles.mediaButtonText}>Appuyez pour choisir</Text>
                 </>
               )}
-              <TouchableOpacity style={styles.mediaButton} onPress={chooseMedia}>
-                <Text style={styles.mediaButtonText}>Choisir depuis la galerie</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -143,7 +172,9 @@ export default function CreateScreen() {
           value={content}
           onChangeText={setContent}
           textAlignVertical="top"
+          maxLength={500}
         />
+        <Text style={styles.characterCount}>{content.length}/500</Text>
 
         <Text style={styles.sectionTitle}>Catégorie de votre glow</Text>
         <View style={styles.categoriesContainer}>
@@ -175,27 +206,18 @@ export default function CreateScreen() {
           })}
         </View>
 
-        <View style={styles.privacySection}>
-          <Text style={styles.sectionTitle}>Confidentialité</Text>
-          <View style={styles.privacyOptions}>
-            <TouchableOpacity style={[styles.privacyOption, styles.activePrivacy]}>
-              <Text style={styles.activePrivacyText}>🌍 Public</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.privacyOption}>
-              <Text style={styles.privacyText}>👥 Abonnés</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.privacyOption}>
-              <Text style={styles.privacyText}>🔒 Amis</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         <LinearGradient
           colors={['#8B5CF6', '#3B82F6']}
           style={styles.publishButton}
         >
-          <TouchableOpacity style={styles.publishButtonInner} onPress={publish} disabled={uploading}>
-            <Text style={styles.publishButtonText}>{uploading ? 'Publication…' : 'Publier votre Glow ✨'}</Text>
+          <TouchableOpacity 
+            style={styles.publishButtonInner} 
+            onPress={publish} 
+            disabled={uploading}
+          >
+            <Text style={styles.publishButtonText}>
+              {uploading ? 'Publication…' : 'Publier votre Glow ✨'}
+            </Text>
           </TouchableOpacity>
         </LinearGradient>
 
@@ -216,6 +238,19 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 30,
     paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
@@ -228,6 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
+    textAlign: 'center',
   },
   content: {
     padding: 16,
@@ -281,21 +317,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  mediaPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
   mediaPlaceholderText: {
     fontSize: 16,
     color: '#6B7280',
     marginTop: 12,
-    marginBottom: 16,
-  },
-  mediaButton: {
-    backgroundColor: '#8B5CF6',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    marginBottom: 8,
   },
   mediaButtonText: {
-    color: 'white',
     fontSize: 14,
+    color: '#8B5CF6',
     fontWeight: '600',
   },
   textInput: {
@@ -306,6 +341,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     minHeight: 120,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'right',
+    marginTop: 4,
   },
   categoriesContainer: {
     flexDirection: 'row',
@@ -328,37 +369,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     color: '#6B7280',
     fontWeight: '500',
-  },
-  privacySection: {
-    marginTop: 20,
-  },
-  privacyOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  privacyOption: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  activePrivacy: {
-    borderColor: '#8B5CF6',
-    backgroundColor: '#F3F4F6',
-  },
-  privacyText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  activePrivacyText: {
-    fontSize: 14,
-    color: '#8B5CF6',
-    fontWeight: '600',
   },
   publishButton: {
     marginTop: 32,

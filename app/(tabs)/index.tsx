@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles } from 'lucide-react-native';
+import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, Plus } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
 
 type ReactionKind = 'couronne' | 'vetements' | 'sport' | 'mental' | 'confiance' | 'soins';
 
@@ -17,6 +18,7 @@ type FeedPost = {
   image?: string;
   glowPoints: number;
   reactions: Record<ReactionKind, number>;
+  userHasReacted: ReactionKind[];
   timestamp: string;
 };
 
@@ -35,6 +37,8 @@ export default function GlowFeed() {
 
   async function fetchFeed() {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { data: rows, error } = await supabase
       .from('posts')
       .select(`
@@ -54,15 +58,28 @@ export default function GlowFeed() {
       .select('post_id, kind')
       .in('post_id', postIds);
 
+    // Get current user's reactions
+    const { data: userReacts } = user ? await supabase
+      .from('reactions')
+      .select('post_id, kind')
+      .in('post_id', postIds)
+      .eq('user_id', user.id) : { data: [] };
+
     const reactMap = new Map<string, Record<ReactionKind, number>>();
+    const userReactMap = new Map<string, ReactionKind[]>();
     for (const id of postIds) {
       reactMap.set(id, {
         couronne: 0, vetements: 0, sport: 0, mental: 0, confiance: 0, soins: 0,
       });
+      userReactMap.set(id, []);
     }
     (allReacts ?? []).forEach((r: any) => {
       const entry = reactMap.get(r.post_id)!;
       entry[r.kind as ReactionKind] += 1;
+    });
+    (userReacts ?? []).forEach((r: any) => {
+      const entry = userReactMap.get(r.post_id)!;
+      entry.push(r.kind as ReactionKind);
     });
 
     const mapped: FeedPost[] = rows.map((r: any) => ({
@@ -76,6 +93,7 @@ export default function GlowFeed() {
       image: r.media_url ?? undefined,
       glowPoints: r.glow_points ?? 0,
       reactions: reactMap.get(r.id)!,
+      userHasReacted: userReactMap.get(r.id)!,
       timestamp: timeSince(new Date(r.created_at)),
     }));
 
@@ -97,24 +115,35 @@ export default function GlowFeed() {
   const handleReaction = async (postId: string, reactionType: keyof typeof reactionIcons) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter pour réagir.');
+    
+    // Check if user has already reacted with this type
+    const post = posts.find(p => p.id === postId);
+    if (post?.userHasReacted.includes(reactionType as ReactionKind)) {
+      Alert.alert('Déjà réagi', 'Vous avez déjà réagi avec ce type de Glow.');
+      return;
+    }
+    
     const { error } = await supabase
       .from('reactions')
       .insert({ post_id: postId, user_id: user.id, kind: reactionType as ReactionKind });
-    if (error && (error as any).code !== '23505') {
-      // 23505: duplicate unique (déjà réagi)
+    
+    if (error) {
       Alert.alert('Erreur', error.message);
-    } else {
-      // Optimiste local
-      setPosts(prev => prev.map(p => p.id === postId ? {
-        ...p,
-        reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
-        glowPoints: p.glowPoints + reactionIcons[reactionType].points,
-      } : p));
+      return;
     }
+    
+    // Update UI after successful insertion
+    setPosts(prev => prev.map(p => p.id === postId ? {
+      ...p,
+      reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
+      glowPoints: p.glowPoints + reactionIcons[reactionType].points,
+      userHasReacted: [...p.userHasReacted, reactionType as ReactionKind],
+    } : p));
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
       <LinearGradient
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
@@ -179,7 +208,20 @@ export default function GlowFeed() {
           </View>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => router.push('/(tabs)/create' as any)}
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#3B82F6']}
+          style={styles.floatingButtonGradient}
+        >
+          <Plus size={24} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -307,6 +349,26 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginLeft: 6,
     fontWeight: '500',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
