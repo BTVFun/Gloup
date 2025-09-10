@@ -89,20 +89,19 @@ export default function ProfileScreen() {
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
       >
-        <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/(tabs)/profile-edit' as any)}>
-            <Edit size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <Settings size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
         <View style={styles.profileSection}>
-          <Image
-            source={{ uri: profile.avatar_url ?? 'https://placehold.co/200x200/png' }}
-            style={styles.profileImage}
-          />
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{ uri: profile.avatar_url ?? 'https://placehold.co/200x200/png' }}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity 
+              style={styles.editAvatarButton}
+              onPress={() => router.push('/(tabs)/profile-edit' as any)}
+            >
+              <Edit size={16} color="white" />
+            </TouchableOpacity>
+          </View>
           
           <Text style={styles.profileName}>{profile.full_name ?? 'Mon profil'}</Text>
           <Text style={styles.profileBio}>
@@ -255,22 +254,14 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
     paddingHorizontal: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   profileSection: {
     alignItems: 'center',
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 12,
   },
   profileImage: {
     width: 100,
@@ -278,7 +269,19 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 4,
     borderColor: 'white',
-    marginBottom: 12,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   profileName: {
     fontSize: 24,

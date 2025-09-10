@@ -18,7 +18,6 @@ const categories = [
 
 export default function CreateGroupScreen() {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -47,7 +46,6 @@ export default function CreateGroupScreen() {
         .from('groups')
         .insert({
           name: name.trim(),
-          description: description.trim() || null,
           category: selectedCategory,
           created_by: user.id,
         })
@@ -118,22 +116,6 @@ export default function CreateGroupScreen() {
             />
           </View>
           <Text style={styles.helperText}>{name.length}/50 caractères</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Description (optionnel)</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Décrivez l'objectif de votre groupe..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={4}
-            maxLength={200}
-            textAlignVertical="top"
-          />
-          <Text style={styles.helperText}>{description.length}/200 caractères</Text>
         </View>
 
         <View style={styles.section}>

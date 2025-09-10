@@ -247,6 +247,25 @@ export default function MessagesScreen() {
           </>
         ) : (
           <>
+            <TouchableOpacity 
+              style={styles.createGroupCard}
+              onPress={() => router.push('/(tabs)/create-group' as any)}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#F97316']}
+                style={styles.createGroupGradient}
+              >
+                <Users size={32} color="white" />
+                <Text style={styles.createGroupTitle}>Créer un groupe</Text>
+                <Text style={styles.createGroupText}>
+                  Rassemblez des personnes autour de vos passions
+                </Text>
+                <View style={styles.createGroupButton}>
+                  <Text style={styles.createGroupButtonText}>Commencer</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
             {groups.map((group) => (
               <TouchableOpacity key={group.id} style={styles.groupItem} onPress={() => router.push({ pathname: '/(tabs)/group/[id]', params: { id: group.id } } as any)}>
                 <Image source={{ uri: group.image }} style={styles.groupImage} />
@@ -275,22 +294,7 @@ export default function MessagesScreen() {
             
             <TouchableOpacity 
               style={styles.createGroupCard}
-              onPress={() => router.push('/(tabs)/create-group' as any)}
-            >
-              <LinearGradient
-                colors={['#F59E0B', '#F97316']}
-                style={styles.createGroupGradient}
-              >
-                <Users size={32} color="white" />
-                <Text style={styles.createGroupTitle}>Créer un groupe</Text>
-                <Text style={styles.createGroupText}>
-                  Rassemblez des personnes autour de vos passions
-                </Text>
-                <View style={styles.createGroupButton}>
-                  <Text style={styles.createGroupButtonText}>Commencer</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+              onPress={() => {
           </>
         )}
       </ScrollView>
