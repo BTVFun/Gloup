@@ -78,10 +78,9 @@ export function useFeed(options: UseFeedOptions = {}) {
       let query = supabase
         .from('posts')
         .select(`
-          id, content, media_url, media_metadata, glow_points, 
-          reply_count, share_count, view_count, created_at,
+          id, content, media_urls, glow_points, created_at,
           profiles:author_id (
-            id, username, avatar_url, glow_points, is_verified
+            id, username, avatar_url, glow_points
           )
         `)
         .order('created_at', { ascending: false })
@@ -157,18 +156,18 @@ export function useFeed(options: UseFeedOptions = {}) {
           name: post.profiles?.username || 'Utilisateur',
           avatar: post.profiles?.avatar_url || 'https://placehold.co/100x100/png',
           glowPoints: post.profiles?.glow_points || 0,
-          isVerified: post.profiles?.is_verified || false,
+          isVerified: false, // Temporarily set to false until column is added
         },
         content: post.content || '',
-        media_urls: post.media_url ? [post.media_url] : [],
-        media_metadata: post.media_url && post.media_metadata ? [post.media_metadata] : {},
+        media_urls: post.media_urls || [],
+        media_metadata: {}, // Temporarily empty until column is added
         glowPoints: post.glow_points || 0,
         reactions: reactionMap.get(post.id)!,
         userHasReacted: userReactionMap.get(post.id)!,
         timestamp: timeSince(new Date(post.created_at)),
-        replyCount: post.reply_count || 0,
-        shareCount: post.share_count || 0,
-        viewCount: post.view_count || 0,
+        replyCount: 0, // Temporarily set to 0 until column is added
+        shareCount: 0, // Temporarily set to 0 until column is added
+        viewCount: 0, // Temporarily set to 0 until column is added
       }));
 
       if (offset === 0) {
