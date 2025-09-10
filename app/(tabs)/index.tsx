@@ -98,20 +98,28 @@ export default function GlowFeed() {
   const handleReaction = async (postId: string, reactionType: keyof typeof reactionIcons) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return Alert.alert('Connexion requise', 'Veuillez vous connecter pour réagir.');
+    
     const { error } = await supabase
       .from('reactions')
       .insert({ post_id: postId, user_id: user.id, kind: reactionType as ReactionKind });
-    if (error && (error as any).code !== '23505') {
-      // 23505: duplicate unique (déjà réagi)
+    
+    if (error) {
+      if ((error as any).code === '23505') {
+        // User already reacted with this type
+        Alert.alert('Déjà réagi', 'Vous avez déjà réagi avec ce type de Glow.');
+        return;
+      }
+      // Other errors
       Alert.alert('Erreur', error.message);
-    } else {
-      // Optimiste local
-      setPosts(prev => prev.map(p => p.id === postId ? {
-        ...p,
-        reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
-        glowPoints: p.glowPoints + reactionIcons[reactionType].points,
-      } : p));
+      return;
     }
+    
+    // Only update UI if insertion was successful
+    setPosts(prev => prev.map(p => p.id === postId ? {
+      ...p,
+      reactions: { ...p.reactions, [reactionType]: p.reactions[reactionType] + 1 },
+      glowPoints: p.glowPoints + reactionIcons[reactionType].points,
+    } : p));
   };
 
   return (
