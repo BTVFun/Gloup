@@ -78,7 +78,7 @@ export function useFeed(options: UseFeedOptions = {}) {
       let query = supabase
         .from('posts')
         .select(`
-          id, content, media_urls, media_metadata, glow_points, 
+          id, content, media_url, media_metadata, glow_points, 
           reply_count, share_count, view_count, created_at,
           profiles:author_id (
             id, username, avatar_url, glow_points
@@ -160,8 +160,8 @@ export function useFeed(options: UseFeedOptions = {}) {
           isVerified: false,
         },
         content: post.content || '',
-        media_urls: post.media_urls || [],
-        media_metadata: post.media_metadata || {},
+        media_urls: post.media_url ? [post.media_url] : [],
+        media_metadata: post.media_url && post.media_metadata ? [post.media_metadata] : {},
         glowPoints: post.glow_points || 0,
         reactions: reactionMap.get(post.id)!,
         userHasReacted: userReactionMap.get(post.id)!,
