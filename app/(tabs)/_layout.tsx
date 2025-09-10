@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Heart, BookOpen, MessageCircle, User, Plus } from 'lucide-react-native';
+import { Heart, BookOpen, MessageCircle, User } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TabLayout() {
   return (
@@ -71,6 +70,38 @@ export default function TabLayout() {
               <User size={size} color={color} />
             </View>
           ),
+        }}
+      />
+      
+      {/* Écrans cachés de la barre de navigation */}
+      <Tabs.Screen
+        name="create"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="profile-edit"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="create-group"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="group"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
         }}
       />
     </Tabs>
