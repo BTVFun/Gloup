@@ -24,7 +24,7 @@ export default function CreateScreen() {
 
   async function chooseMedia() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return Alert.alert('Permission', 'Autorisez l'accès à la galerie.');
+    if (!perm.granted) return Alert.alert('Permission', 'Autorisez l\'accès à la galerie.');
     const res = await ImagePicker.launchImageLibraryAsync({ 
       mediaTypes: ImagePicker.MediaTypeOptions.All, 
       quality: 0.9,
