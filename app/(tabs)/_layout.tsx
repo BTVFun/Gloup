@@ -104,6 +104,18 @@ export default function TabLayout() {
           href: null, // Cache cet écran de la barre de navigation
         }}
       />
+      <Tabs.Screen
+        name="chat/[id]"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
+      <Tabs.Screen
+        name="group/[id]"
+        options={{
+          href: null, // Cache cet écran de la barre de navigation
+        }}
+      />
     </Tabs>
   );
 }
