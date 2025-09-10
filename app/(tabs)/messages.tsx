@@ -300,6 +300,10 @@ export default function MessagesScreen() {
             >
             </TouchableOpacity>
           </>
+              }}
+            >
+            </TouchableOpacity>
+          </>
         )}
       </ScrollView>
     </View>
