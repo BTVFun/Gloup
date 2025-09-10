@@ -81,7 +81,7 @@ export function useFeed(options: UseFeedOptions = {}) {
           id, content, media_url, media_metadata, glow_points, 
           reply_count, share_count, view_count, created_at,
           profiles:author_id (
-            id, username, avatar_url, glow_points
+            id, username, avatar_url, glow_points, is_verified
           )
         `)
         .order('created_at', { ascending: false })
@@ -157,7 +157,7 @@ export function useFeed(options: UseFeedOptions = {}) {
           name: post.profiles?.username || 'Utilisateur',
           avatar: post.profiles?.avatar_url || 'https://placehold.co/100x100/png',
           glowPoints: post.profiles?.glow_points || 0,
-          isVerified: false,
+          isVerified: post.profiles?.is_verified || false,
         },
         content: post.content || '',
         media_urls: post.media_url ? [post.media_url] : [],
