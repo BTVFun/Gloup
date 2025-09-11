@@ -48,13 +48,62 @@ export default function TabLayout() {
           />
           
           {/* Hidden screens */}
-          <Tabs.Screen name="create" options={{ href: null }} />
-          <Tabs.Screen name="profile-edit" options={{ href: null }} />
-          <Tabs.Screen name="create-group" options={{ href: null }} />
-          <Tabs.Screen name="chat" options={{ href: null }} />
-          <Tabs.Screen name="group" options={{ href: null }} />
-          <Tabs.Screen name="chat/[id]" options={{ href: null }} />
-          <Tabs.Screen name="group/[id]" options={{ href: null }} />
+          <Tabs.Screen 
+            name="create" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="profile-edit" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="create-group" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="chat" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="group" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="chat/[id]" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
+          <Tabs.Screen 
+            name="group/[id]" 
+            options={{ 
+              href: null,
+              tabBarStyle: { display: 'none' },
+              tabBarButton: () => null 
+            }} 
+          />
         </Tabs>
       </View>
     </TabBarScrollProvider>

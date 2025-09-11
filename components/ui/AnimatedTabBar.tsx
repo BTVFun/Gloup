@@ -15,6 +15,9 @@ export function AnimatedTabBar({ state, descriptors, navigation, translateY }: A
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
+  // Debug: Log routes to identify visibility issues
+  console.log('All routes:', state.routes.map((r: any) => ({ name: r.name, href: descriptors[r.key]?.options?.href })));
+
   const getTabIcon = (routeName: string, focused: boolean) => {
     const iconProps = {
       size: 24,
@@ -46,12 +49,13 @@ export function AnimatedTabBar({ state, descriptors, navigation, translateY }: A
         }
       ]}
     >
-      {state.routes.map((route: any, index: number) => {
+      {state.routes.filter((route: any) => {
+        const { options } = descriptors[route.key];
+        // Only show routes that don't have href: null
+        return options.href !== null;
+      }).map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
-
-        // Skip hidden routes
-        if (options.href === null) return null;
 
         const onPress = () => {
           const event = navigation.emit({
