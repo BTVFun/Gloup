@@ -1,7 +1,6 @@
 // Enhanced PostCard Component for Gloup ✨
 import React, { useState, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -38,7 +37,7 @@ interface PostCardProps {
 
 const reactionIcons = {
   couronne: { icon: Crown, color: '#FFD700', points: 20, label: 'Couronne' },
-  vetements: { icon: Shirt, color: '#8B5CF6', points: 10, label: 'Style' },
+  vetements: { icon: Shirt, color: '#2B2E78', points: 10, label: 'Style' },
   sport: { icon: Dumbbell, color: '#EF4444', points: 10, label: 'Sport' },
   mental: { icon: Brain, color: '#10B981', points: 10, label: 'Mental' },
   confiance: { icon: Shield, color: '#F59E0B', points: 10, label: 'Confiance' },
@@ -185,14 +184,9 @@ export function PostCard({
         {/* Reactions Summary */}
         {post.glowPoints > 0 && (
           <View style={styles.reactionsContainer}>
-            <LinearGradient
-              colors={['#8B5CF6', '#3B82F6']}
-              style={styles.pointsGradient}
-            >
-              <Text style={styles.totalPoints}>
-                +{post.glowPoints} Glow Points
-              </Text>
-            </LinearGradient>
+            <View style={[styles.pointsGradient, { backgroundColor: '#2B2E78' }]}>
+              <Text style={styles.totalPoints}>+{post.glowPoints} Glow Points</Text>
+            </View>
             
             {topReactions.length > 0 && (
               <View style={styles.reactionsList}>
@@ -450,8 +444,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopWidth: 0,
     paddingTop: 12,
   },
   actionButton: {

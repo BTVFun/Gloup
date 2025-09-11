@@ -1,5 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import { FlashList } from '@shopify/flash-list';
 import { PostCard } from '@/components/ui/PostCard';
@@ -7,8 +6,10 @@ import { useFeed } from '@/hooks/useFeed';
 import { AnalyticsManager } from '@/lib/analytics';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+import { useTheme } from '@/lib/theme-context';
 
 export default function GlowFeed() {
+  const { theme } = useTheme();
   const {
     posts,
     loading,
@@ -37,15 +38,7 @@ export default function GlowFeed() {
     />
   );
 
-  const renderHeader = () => (
-    <LinearGradient
-      colors={['#8B5CF6', '#3B82F6']}
-      style={styles.header}
-    >
-      <Text style={styles.title}>GlowUp</Text>
-      <Text style={styles.subtitle}>Together</Text>
-    </LinearGradient>
-  );
+  const renderHeader = () => <View style={{ height: 12 }} />; // petite marge sous le header flouté
 
   const renderFooter = () => {
     if (!loading || posts.length === 0) return null;
@@ -69,7 +62,7 @@ export default function GlowFeed() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
       <FlashList
         data={posts}
         renderItem={renderPost}
@@ -87,15 +80,12 @@ export default function GlowFeed() {
       />
 
       <TouchableOpacity 
-        style={styles.floatingButton}
+        style={[styles.floatingButton, { shadowColor: theme.color.brand[600] }]}
         onPress={() => router.push('/(tabs)/create' as any)}
       >
-        <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
-          style={styles.floatingButtonGradient}
-        >
-          <Plus size={24} color="white" />
-        </LinearGradient>
+        <View style={[styles.floatingButtonGradient, { backgroundColor: theme.color.brand[600] }]}>
+          <Plus size={24} color={theme.text.inverted} />
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -104,29 +94,10 @@ export default function GlowFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F7',
   },
   listContent: {
     paddingHorizontal: 16,
-  },
-  header: {
-    paddingTop: 50,
-    paddingBottom: 30,
-    marginHorizontal: -16,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginTop: 4,
   },
   footer: {
     paddingVertical: 20,
@@ -158,7 +129,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

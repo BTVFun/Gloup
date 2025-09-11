@@ -158,7 +158,7 @@ function SingleMediaView({
           />
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#8B5CF6" />
+              <ActivityIndicator size="large" color="#2B2E78" />
             </View>
           )}
         </View>
@@ -199,7 +199,7 @@ function TwoMediaGrid({
           />
           {loadingStates[index] && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#2B2E78" />
             </View>
           )}
         </TouchableOpacity>
@@ -238,7 +238,7 @@ function ThreeMediaGrid({
         />
         {loadingStates[0] && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="small" color="#8B5CF6" />
+            <ActivityIndicator size="small" color="#2B2E78" />
           </View>
         )}
       </TouchableOpacity>
@@ -260,7 +260,7 @@ function ThreeMediaGrid({
             />
             {loadingStates[index + 1] && (
               <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="small" color="#8B5CF6" />
+                <ActivityIndicator size="small" color="#2B2E78" />
               </View>
             )}
           </TouchableOpacity>
@@ -304,7 +304,7 @@ function FourPlusMediaGrid({
           />
           {loadingStates[index] && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#2B2E78" />
             </View>
           )}
         </TouchableOpacity>

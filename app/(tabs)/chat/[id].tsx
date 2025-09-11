@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Image, K
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from '@/lib/theme-context';
 
 type Message = {
   id: string;
@@ -14,6 +15,7 @@ type Message = {
 };
 
 export default function ChatScreen() {
+  const { theme } = useTheme();
   const { id: receiverId } = useLocalSearchParams<{ id: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
@@ -181,7 +183,7 @@ export default function ChatScreen() {
           onPress={sendMessage}
           disabled={!text.trim()}
         >
-          <Send size={20} color={text.trim() ? '#8B5CF6' : '#9CA3AF'} />
+          <Send size={20} color={text.trim() ? theme.color.brand[600] : '#9CA3AF'} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -200,8 +202,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
     backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    // Hide custom in-screen header to rely on navigation blur header
+    display: 'none',
   },
   backButton: {
     marginRight: 12,
@@ -236,7 +238,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   myBubble: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2B2E78',
   },
   theirBubble: {
     backgroundColor: 'white',

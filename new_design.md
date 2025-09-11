@@ -9,19 +9,18 @@ Comment remplir
 
 ---
 
-## 0) Décisions rapides (12 choix)
-- Couleur de marque (hex) : "#..."
-- Couleur d’accent secondaire (hex) : "#..."
-- Luminosité des neutres (clair vs gris chaud/froid) : "clair chaud | clair froid | neutre | sombre"
-- Rayon des bords global (xs/sm/md/lg) : "xs | sm | md | lg"
-- Densité d’interface (espacement) : "compacte | standard | aérée"
-- Typographie (titres + corps) : "Titre: … / Corps: …"
-- Style des boutons : "pleins | outline | mixtes" + forme "carré | arrondi | pilule"
-- App Header (barre du haut) : "opaque | translucide | verre léger | dégradé discret"
-- Listes/Cartes : "avec séparateurs fins | sans séparateurs | cartes avec ombre | cartes sans ombre"
-- Mode sombre : "oui (inversé) | oui (adapté) | non"
-- Niveau d’animation : "léger | moyen | riche" + haptique "oui/non"
-- Ton de la copie (UX writing) : "direct | chaleureux | premium | fun | sérieux"
+## 0) Décisions rapides (choix)
+- Couleur de marque (hex) : "#2B2E78"
+- Couleur d’accent secondaire (hex) : "#FAFBFF"
+- Luminosité des neutres (clair vs gris chaud/froid) : "clair chaud"
+- Rayon des bords global (xs/sm/md/lg) : "md"
+- Densité d’interface (espacement) : "standard"
+- Style des boutons : "mixtes" + forme "arrondi"
+- App Header (barre du haut) : "effet blur et beaucoup plus petit, juste le nom et on mettra le logo quand il y en aura un"
+- Listes/Cartes : "sans séparateurs"
+- Mode sombre : "oui (adapté)"
+- Niveau d’animation : "léger"
+- Ton de la copie (UX writing) : "chaleureux"
 
 ---
 

@@ -100,8 +100,7 @@ const styles = StyleSheet.create({
   msgBubble: { backgroundColor: '#fff', borderRadius: 12, padding: 10, flexShrink: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
   sender: { fontSize: 12, color: '#6B7280', marginBottom: 2 },
   msgText: { fontSize: 15, color: '#1F2937' },
-  inputRow: { flexDirection: 'row', padding: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB', backgroundColor: 'white' },
+  inputRow: { flexDirection: 'row', padding: 8, borderTopWidth: 0, backgroundColor: 'white' },
   input: { flex: 1, backgroundColor: '#F3F4F6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10, marginRight: 8 },
-  sendBtn: { backgroundColor: '#8B5CF6', borderRadius: 20, paddingHorizontal: 16, justifyContent: 'center' },
+  sendBtn: { backgroundColor: '#2B2E78', borderRadius: 20, paddingHorizontal: 16, justifyContent: 'center' },
 });
-

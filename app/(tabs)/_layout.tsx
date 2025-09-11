@@ -1,14 +1,25 @@
 import { Tabs } from 'expo-router';
 import { Heart, BookOpen, MessageCircle, User } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { useTheme } from '@/lib/theme-context';
 
 export default function TabLayout() {
+  const { theme } = useTheme();
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerTitle: 'Gloup',
+        headerTitleAlign: 'center',
+        headerTintColor: theme.color.brand[600],
+        headerTitleStyle: { color: theme.color.brand[600], fontWeight: '700', fontSize: 16 },
+        headerTransparent: true,
+        headerBackground: () => (
+          <BlurView tint="light" intensity={40} style={StyleSheet.absoluteFill} />
+        ),
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.surface.container,
           borderTopWidth: 0,
           elevation: 10,
           shadowColor: '#000',
@@ -19,8 +30,8 @@ export default function TabLayout() {
           paddingBottom: 20,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: '#8B5CF6',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: theme.color.brand[600],
+        tabBarInactiveTintColor: theme.text.muted,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
@@ -31,9 +42,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Glow',
+          title: 'Gloup',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={[styles.tabIcon, focused && styles.activeTab]}>
+            <View style={[styles.tabIcon, focused && { backgroundColor: theme.color.accent[50] }]}>
               <Heart size={size} color={color} fill={focused ? color : 'transparent'} />
             </View>
           ),
@@ -44,7 +55,7 @@ export default function TabLayout() {
         options={{
           title: 'Conseils',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={[styles.tabIcon, focused && styles.activeTab]}>
+            <View style={[styles.tabIcon, focused && { backgroundColor: theme.color.accent[50] }]}>
               <BookOpen size={size} color={color} />
             </View>
           ),
@@ -55,7 +66,7 @@ export default function TabLayout() {
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={[styles.tabIcon, focused && styles.activeTab]}>
+            <View style={[styles.tabIcon, focused && { backgroundColor: theme.color.accent[50] }]}>
               <MessageCircle size={size} color={color} />
             </View>
           ),
@@ -66,7 +77,7 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={[styles.tabIcon, focused && styles.activeTab]}>
+            <View style={[styles.tabIcon, focused && { backgroundColor: theme.color.accent[50] }]}>
               <User size={size} color={color} />
             </View>
           ),
@@ -124,8 +135,5 @@ const styles = StyleSheet.create({
   tabIcon: {
     padding: 8,
     borderRadius: 20,
-  },
-  activeTab: {
-    backgroundColor: '#F3F4F6',
   },
 });
