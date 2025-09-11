@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar } from 'lucide-react-native';
+import { CreditCard as Edit, Crown, Heart, MessageCircle, Share, Sparkles, Trophy, Target, Calendar, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
+import { useTheme } from '@/lib/theme-context';
 
 interface UserStats {
   glowPoints: number;
@@ -53,6 +54,7 @@ const recentPosts = [
 ];
 
 export default function ProfileScreen() {
+  const { theme } = useTheme();
   const [profile, setProfile] = useState<{full_name?: string|null; avatar_url?: string|null; bio?: string|null; glow_points?: number|null}>({});
   const [userStats, setUserStats] = useState<UserStats>(defaultStats);
 
@@ -82,6 +84,7 @@ export default function ProfileScreen() {
       });
     })();
   }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -227,6 +230,16 @@ export default function ProfileScreen() {
           <Text style={styles.supportButtonText}>↩︎ Se déconnecter</Text>
         </TouchableOpacity>
 
+        {/* Add Post Button - Only visible on profile page */}
+        <TouchableOpacity 
+          style={[styles.floatingButton, { shadowColor: theme.color.brand[600] }]}
+          onPress={() => router.push('/(tabs)/create' as any)}
+        >
+          <View style={[styles.floatingButtonGradient, { backgroundColor: theme.color.brand[600] }]}>
+            <Plus size={24} color={theme.text.inverted} />
+          </View>
+        </TouchableOpacity>
+
       </View>
       </ScrollView>
     </View>
@@ -236,7 +249,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAFBFF', // Updated to match design system
   },
   header: {
     paddingTop: 60,
@@ -451,5 +464,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

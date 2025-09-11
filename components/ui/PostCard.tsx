@@ -318,22 +318,22 @@ function ReactionButton({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 12, // Reduced spacing for better density
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12, // Using md radius from design system
+    padding: 16, // Maintaining lg spacing
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.06, // Lighter shadow as per design
+    shadowRadius: 6,
     elevation: 3,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16, // Using lg spacing
   },
   userSection: {
     flexDirection: 'row',
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    marginRight: 12,
+    marginRight: 16, // Using lg spacing
   },
   userInfo: {
     flex: 1,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     maxWidth: 150,
   },
   verifiedBadge: {
-    marginLeft: 4,
+    marginLeft: 8, // Using sm spacing
     width: 16,
     height: 16,
     borderRadius: 8,
@@ -371,12 +371,12 @@ const styles = StyleSheet.create({
   glowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 4, // Using xs spacing
   },
   glowPoints: {
     fontSize: 12,
     color: '#6B7280',
-    marginLeft: 4,
+    marginLeft: 8, // Using sm spacing
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -384,26 +384,26 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 12,
     color: '#9CA3AF',
-    marginBottom: 4,
+    marginBottom: 8, // Using sm spacing
   },
   optionsButton: {
-    padding: 4,
+    padding: 8, // Using sm spacing for better touch target
   },
   content: {
     fontSize: 15,
     color: '#374151',
     lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: 16, // Using lg spacing
   },
   reactionsContainer: {
-    marginBottom: 12,
+    marginBottom: 16, // Using lg spacing
   },
   pointsGradient: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16, // Using lg spacing
+    paddingVertical: 8, // Using sm spacing
     borderRadius: 16,
     alignSelf: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12, // Using md spacing
   },
   totalPoints: {
     fontSize: 14,
@@ -413,13 +413,13 @@ const styles = StyleSheet.create({
   reactionsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12, // Using md spacing
   },
   reactionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16, // Using lg spacing
+    paddingVertical: 8, // Using sm spacing
     borderRadius: 20,
     borderWidth: 1,
     backgroundColor: '#F9FAFB',
@@ -427,11 +427,11 @@ const styles = StyleSheet.create({
   reactionCount: {
     fontSize: 12,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: 8, // Using sm spacing
   },
   moreReactionsButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16, // Using lg spacing
+    paddingVertical: 8, // Using sm spacing
     borderRadius: 20,
     backgroundColor: '#F3F4F6',
   },
@@ -445,24 +445,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 0,
-    paddingTop: 12,
+    paddingTop: 16, // Using lg spacing
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16, // Using lg spacing
+    paddingVertical: 12, // Using md spacing
     borderRadius: 20,
     backgroundColor: '#F9FAFB',
   },
   actionText: {
     fontSize: 14,
     color: '#6B7280',
-    marginLeft: 6,
+    marginLeft: 8, // Using sm spacing
     fontWeight: '500',
   },
   viewCount: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12, // Using md spacing
   },
   viewCountText: {
     fontSize: 12,

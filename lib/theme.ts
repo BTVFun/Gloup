@@ -38,18 +38,18 @@ export type Theme = {
 export const themeLight: Theme = {
   color: {
     brand: {
-      50: '#EEF0FA',
-      100: '#D9DCF2',
-      200: '#B4BAE5',
-      300: '#8F98D7',
-      400: '#6A76CA',
-      500: '#4755BD',
+      50: '#F0F1FD',
+      100: '#E1E4FB',
+      200: '#C3C9F7',
+      300: '#A5AEF3',
+      400: '#8793EF',
+      500: '#6978EB',
       600: '#2B2E78', // primary brand
-      700: '#23255F',
-      800: '#1B1D49',
-      900: '#141636',
+      700: '#252860',
+      800: '#1F2248',
+      900: '#191C30',
     },
-    accent: { 50: '#FAFBFF', 100: '#F5F7FD', 500: '#9AAAF4', 600: '#7E93EE' },
+    accent: { 50: '#FAFBFF', 100: '#F5F7FD', 500: '#A5AEF3', 600: '#8793EF' },
     success: { 50: '#EAF8F0', 500: '#22C55E', 600: '#16A34A' },
     warning: { 50: '#FFF7E6', 500: '#F59E0B', 600: '#D97706' },
     danger: { 50: '#FEECEE', 500: '#EF4444', 600: '#DC2626' },
@@ -59,10 +59,10 @@ export const themeLight: Theme = {
     overlay: 'rgba(0,0,0,0.25)'
   },
   surface: {
-    background: '#FAF9F7',
+    background: '#FAFBFF', // Updated to match accent secondary from design
     container: '#FFFFFF',
     elevated: '#FFFFFF',
-    border: 'rgba(24, 24, 27, 0.08)',
+    border: 'rgba(43, 46, 120, 0.08)', // Using brand color for borders
   },
   text: {
     primary: '#1F2937',
@@ -70,7 +70,7 @@ export const themeLight: Theme = {
     muted: '#6B7280',
     inverted: '#FFFFFF',
   },
-  radius: { xs: 6, sm: 8, md: 12, lg: 16, xl: 20, full: 999 },
+  radius: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, full: 999 }, // Adjusted xs to match 8pt system
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32 },
   elevation: {
     0: 'rgba(0,0,0,0.00) 0px 0px 0px',

@@ -1,6 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart as Heart2, Dumbbell, Brain, Palette, BookOpen, Utensils, Plus } from 'lucide-react-native';
+import { Heart as Heart2, Dumbbell, Brain, Palette, BookOpen, Utensils } from 'lucide-react-native';
+import { CustomHeader } from '@/components/ui/CustomHeader';
+import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+import { useTheme } from '@/lib/theme-context';
 
 const categories = [
   {
@@ -85,8 +88,12 @@ const featuredArticles = [
 ];
 
 export default function ConseilsScreen() {
+  const { theme } = useTheme();
+  const { headerTranslateY, onScroll } = useHeaderScroll();
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
+      <CustomHeader title="Conseils" translateY={headerTranslateY} />
       <LinearGradient
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
@@ -95,6 +102,12 @@ export default function ConseilsScreen() {
         <Text style={styles.subtitle}>Accompagnez votre évolution</Text>
       </LinearGradient>
 
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>Articles du moment</Text>
         
@@ -138,26 +151,17 @@ export default function ConseilsScreen() {
         </View>
 
       </View>
-
-      <TouchableOpacity 
-        style={styles.floatingButton}
-        onPress={() => router.push('/(tabs)/create' as any)}
-      >
-        <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
-          style={styles.floatingButtonGradient}
-        >
-          <Plus size={24} color="white" />
-        </LinearGradient>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     paddingTop: 60,
@@ -285,25 +289,5 @@ const styles = StyleSheet.create({
   articlesCount: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.7)',
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  floatingButtonGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, MessageCircle, Users, Heart, Plus } from 'lucide-react-native';
+import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
+import { CustomHeader } from '@/components/ui/CustomHeader';
+import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+import { useTheme } from '@/lib/theme-context';
 
 interface DirectMessage {
   id: string;
@@ -41,6 +44,8 @@ interface Conversation {
 const mockGroups: Group[] = [];
 
 export default function MessagesScreen() {
+  const { theme } = useTheme();
+  const { headerTranslateY, onScroll } = useHeaderScroll();
   const [activeTab, setActiveTab] = useState<'messages' | 'groups'>('messages');
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>(mockGroups);
@@ -169,7 +174,9 @@ export default function MessagesScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
+      <CustomHeader title="Messages" translateY={headerTranslateY} />
+      
       <LinearGradient
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
@@ -211,7 +218,12 @@ export default function MessagesScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         {activeTab === 'messages' ? (
           <>
             {conversations.map((conversation) => (
@@ -294,22 +306,6 @@ export default function MessagesScreen() {
           </>
         )}
       </ScrollView>
-
-      <TouchableOpacity 
-        style={styles.floatingButton}
-        onPress={() => {
-          // TODO: Navigate to user selection page for direct messages
-          // For now, keeping existing functionality until user selection is implemented
-          router.push('/(tabs)/create-group' as any);
-        }}
-      >
-        <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
-          style={styles.floatingButtonGradient}
-        >
-          <Plus size={24} color="white" />
-        </LinearGradient>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -317,7 +313,6 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -563,26 +558,6 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     paddingHorizontal: 40,
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  floatingButtonGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 
