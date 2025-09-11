@@ -1,8 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart as Heart2, Dumbbell, Brain, Palette, BookOpen, Utensils } from 'lucide-react-native';
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+import { useTabBarScrollContext } from '@/contexts/TabBarScrollContext';
 import { useTheme } from '@/lib/theme-context';
 
 const categories = [
@@ -89,11 +88,10 @@ const featuredArticles = [
 
 export default function ConseilsScreen() {
   const { theme } = useTheme();
-  const { headerTranslateY, onScroll } = useHeaderScroll();
+  const { onScroll } = useTabBarScrollContext();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
-      <CustomHeader title="Conseils" translateY={headerTranslateY} />
       <LinearGradient
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
@@ -107,6 +105,7 @@ export default function ConseilsScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>Articles du moment</Text>

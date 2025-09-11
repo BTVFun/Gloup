@@ -38,36 +38,36 @@ export type Theme = {
 export const themeLight: Theme = {
   color: {
     brand: {
-      50: '#F0F1FD',
-      100: '#E1E4FB',
-      200: '#C3C9F7',
-      300: '#A5AEF3',
-      400: '#8793EF',
-      500: '#6978EB',
+      50: '#F8F9FF',
+      100: '#EBEEFF',
+      200: '#D6DDFF',
+      300: '#B8C5FF',
+      400: '#95A3FF',
+      500: '#7B8CFF',
       600: '#2B2E78', // primary brand
-      700: '#252860',
-      800: '#1F2248',
-      900: '#191C30',
+      700: '#252968',
+      800: '#1E2258',
+      900: '#181B48',
     },
-    accent: { 50: '#FAFBFF', 100: '#F5F7FD', 500: '#A5AEF3', 600: '#8793EF' },
-    success: { 50: '#EAF8F0', 500: '#22C55E', 600: '#16A34A' },
-    warning: { 50: '#FFF7E6', 500: '#F59E0B', 600: '#D97706' },
-    danger: { 50: '#FEECEE', 500: '#EF4444', 600: '#DC2626' },
+    accent: { 50: '#FAFBFF', 100: '#F5F7FD', 500: '#7B8CFF', 600: '#6978EB' },
+    success: { 50: '#F0FDF4', 500: '#22C55E', 600: '#16A34A' },
+    warning: { 50: '#FFFBEB', 500: '#F59E0B', 600: '#D97706' },
+    danger: { 50: '#FEF2F2', 500: '#EF4444', 600: '#DC2626' },
     neutral: {
-      0: '#FFFFFF', 25: '#FCFBFA', 50: '#FAF9F7', 100: '#F5F2EE', 200: '#E9E4DE', 300: '#D9D1C9', 400: '#BDB3A9', 500: '#A29688', 600: '#7E7468', 700: '#5F584F', 800: '#3F3A35', 900: '#26231F', 950: '#171512',
+      0: '#FFFFFF', 25: '#FDFCFB', 50: '#FAF9F7', 100: '#F7F5F3', 200: '#F0EDE9', 300: '#E6E1DB', 400: '#D1C7B8', 500: '#B8A898', 600: '#9C8A78', 700: '#7D6B5A', 800: '#5D4E42', 900: '#3D342C', 950: '#2A221C',
     },
-    overlay: 'rgba(0,0,0,0.25)'
+    overlay: 'rgba(43, 46, 120, 0.25)'
   },
   surface: {
     background: '#FAFBFF', // Updated to match accent secondary from design
     container: '#FFFFFF',
-    elevated: '#FFFFFF',
+    elevated: '#F8F9FF',
     border: 'rgba(43, 46, 120, 0.08)', // Using brand color for borders
   },
   text: {
-    primary: '#1F2937',
-    secondary: '#374151',
-    muted: '#6B7280',
+    primary: '#2A221C',
+    secondary: '#5D4E42',
+    muted: '#9C8A78',
     inverted: '#FFFFFF',
   },
   radius: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, full: 999 }, // Adjusted xs to match 8pt system

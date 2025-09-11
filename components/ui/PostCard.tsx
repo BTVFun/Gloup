@@ -1,11 +1,12 @@
 // Enhanced PostCard Component for Gloup ✨
 import React, { useState, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
+import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, MoveHorizontal as MoreHorizontal, MessageSquare, Share2 } from 'lucide-react-native';
 import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MediaCarousel } from './MediaCarousel';
 import { AnalyticsManager } from '@/lib/analytics';
+import { useTheme } from '@/lib/theme-context';
 
 interface PostCardProps {
   post: {
@@ -52,6 +53,7 @@ export function PostCard({
   onUserPress,
   onOptionsPress 
 }: PostCardProps) {
+  const { theme } = useTheme();
   const [imageError, setImageError] = useState(false);
   const [showAllReactions, setShowAllReactions] = useState(false);
   const scaleValue = useSharedValue(1);
@@ -229,27 +231,33 @@ export function PostCard({
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity 
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: theme.surface.elevated }]}
             onPress={handleComment}
+            accessibilityLabel="Commenter ce post"
           >
-            <MessageCircle size={18} color="#6B7280" />
-            <Text style={styles.actionText}>
-              {post.replyCount > 0 ? post.replyCount : 'Commenter'}
-            </Text>
+            <MessageSquare size={18} color={theme.text.muted} />
+            {post.replyCount > 0 && (
+              <Text style={[styles.actionCount, { color: theme.text.muted }]}>
+                {post.replyCount}
+              </Text>
+            )}
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: theme.surface.elevated }]}
             onPress={handleShare}
+            accessibilityLabel="Partager ce post"
           >
-            <Share size={18} color="#6B7280" />
-            <Text style={styles.actionText}>
-              {post.shareCount > 0 ? post.shareCount : 'Partager'}
-            </Text>
+            <Share2 size={18} color={theme.text.muted} />
+            {post.shareCount > 0 && (
+              <Text style={[styles.actionCount, { color: theme.text.muted }]}>
+                {post.shareCount}
+              </Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.viewCount}>
-            <Text style={styles.viewCountText}>
+            <Text style={[styles.viewCountText, { color: theme.text.muted }]}>
               {post.viewCount} vues
             </Text>
           </View>
@@ -450,22 +458,20 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16, // Using lg spacing
+    paddingHorizontal: 12,
     paddingVertical: 12, // Using md spacing
-    borderRadius: 20,
-    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    minWidth: 44, // Accessibility minimum touch target
   },
-  actionText: {
+  actionCount: {
     fontSize: 14,
-    color: '#6B7280',
     marginLeft: 8, // Using sm spacing
-    fontWeight: '500',
+    fontWeight: '600',
   },
   viewCount: {
     paddingHorizontal: 12, // Using md spacing
   },
   viewCountText: {
     fontSize: 12,
-    color: '#9CA3AF',
   },
 });

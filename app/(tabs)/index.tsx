@@ -3,14 +3,14 @@ import { FlashList } from '@shopify/flash-list';
 import { PostCard } from '@/components/ui/PostCard';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { useFeed } from '@/hooks/useFeed';
-import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+import { useTabBarScrollContext } from '@/contexts/TabBarScrollContext';
 import { AnalyticsManager } from '@/lib/analytics';
 import { useEffect } from 'react';
 import { useTheme } from '@/lib/theme-context';
 
 export default function GlowFeed() {
   const { theme } = useTheme();
-  const { headerTranslateY, onScroll } = useHeaderScroll();
+  const { onScroll } = useTabBarScrollContext();
   const {
     posts,
     loading,
@@ -68,16 +68,10 @@ export default function GlowFeed() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
-      <CustomHeader 
-        title="Gloup" 
-        translateY={headerTranslateY}
-      />
-      
       <FlashList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         onEndReached={hasMore ? loadMore : undefined}
@@ -87,7 +81,7 @@ export default function GlowFeed() {
         refreshing={refreshing}
         estimatedItemSize={300}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingTop: 60, paddingBottom: 100 }]}
       />
 
     </View>

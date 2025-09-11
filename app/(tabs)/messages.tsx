@@ -4,8 +4,7 @@ import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { useHeaderScroll } from '@/hooks/useHeaderScroll';
+import { useTabBarScrollContext } from '@/contexts/TabBarScrollContext';
 import { useTheme } from '@/lib/theme-context';
 
 interface DirectMessage {
@@ -45,7 +44,7 @@ const mockGroups: Group[] = [];
 
 export default function MessagesScreen() {
   const { theme } = useTheme();
-  const { headerTranslateY, onScroll } = useHeaderScroll();
+  const { onScroll } = useTabBarScrollContext();
   const [activeTab, setActiveTab] = useState<'messages' | 'groups'>('messages');
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>(mockGroups);
@@ -175,8 +174,6 @@ export default function MessagesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
-      <CustomHeader title="Messages" translateY={headerTranslateY} />
-      
       <LinearGradient
         colors={['#8B5CF6', '#3B82F6']}
         style={styles.header}
@@ -223,6 +220,7 @@ export default function MessagesScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         {activeTab === 'messages' ? (
           <>

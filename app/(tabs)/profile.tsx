@@ -196,31 +196,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Progression du mois</Text>
-          <View style={styles.progressCard}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              style={styles.progressGradient}
-            >
-              <View style={styles.progressItem}>
-                <Target size={24} color="white" />
-                <View style={styles.progressInfo}>
-                  <Text style={styles.progressTitle}>Objectifs atteints</Text>
-                  <Text style={styles.progressValue}>8/10</Text>
-                </View>
-              </View>
-              
-              <View style={styles.progressItem}>
-                <Calendar size={24} color="white" />
-                <View style={styles.progressInfo}>
-                  <Text style={styles.progressTitle}>Jours actifs</Text>
-                  <Text style={styles.progressValue}>24/30</Text>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-        </View>
 
         <TouchableOpacity style={styles.supportButton}>
           <Text style={styles.supportButtonText}>❤️ Soutenir GlowUp</Text>
@@ -427,31 +402,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontWeight: '600',
-  },
-  progressCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  progressGradient: {
-    padding: 20,
-  },
-  progressItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  progressInfo: {
-    marginLeft: 16,
-  },
-  progressTitle: {
-    fontSize: 16,
-    color: 'white',
-    marginBottom: 4,
-  },
-  progressValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
   },
   supportButton: {
     backgroundColor: '#EC4899',
