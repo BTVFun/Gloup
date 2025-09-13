@@ -17,7 +17,8 @@ import Animated, {
   useAnimatedStyle, 
   withSpring,
   withTiming,
-  runOnJS
+  runOnJS,
+  withSequence
 } from 'react-native-reanimated';
 import { AnalyticsManager } from '@/lib/analytics';
 

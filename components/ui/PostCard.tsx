@@ -2,7 +2,12 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
 import { Heart, MessageCircle, Share, Crown, Shirt, Dumbbell, Brain, Shield, Sparkles, MoveHorizontal as MoreHorizontal, MessageSquare, Share2 } from 'lucide-react-native';
-import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  withSpring, 
+  useAnimatedStyle,
+  withSequence 
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { MediaCarousel } from './MediaCarousel';
 import { AnalyticsManager } from '@/lib/analytics';
