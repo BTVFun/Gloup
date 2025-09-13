@@ -1,7 +1,7 @@
 // Comment Card Component with Threading Support
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import { Heart, MessageCircle, MoreHorizontal, Crown } from 'lucide-react-native';
+import { Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Crown } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme-context';
 import { useButtonAnimation } from '@/hooks/useAnimation';
