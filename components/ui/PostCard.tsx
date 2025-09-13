@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { MediaCarousel } from './MediaCarousel';
 import { AnalyticsManager } from '@/lib/analytics';
 import { useTheme } from '@/lib/theme-context';
+import { useButtonAnimation, useCardAnimation } from '@/hooks/useAnimation';
 
 interface PostCardProps {
   post: {
@@ -56,11 +57,8 @@ export function PostCard({
   const { theme } = useTheme();
   const [imageError, setImageError] = useState(false);
   const [showAllReactions, setShowAllReactions] = useState(false);
-  const scaleValue = useSharedValue(1);
+  const cardAnimation = useCardAnimation();
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleValue.value }],
-  }));
 
   const handleReaction = useCallback((type: string) => {
     // Haptic feedback
@@ -68,10 +66,9 @@ export function PostCard({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
-    // Animation
-    scaleValue.value = withSpring(0.95, {}, () => {
-      scaleValue.value = withSpring(1);
-    });
+    // Celebration animation
+    cardAnimation.press();
+    setTimeout(() => cardAnimation.release(), 150);
     
     // Analytics
     AnalyticsManager.trackUserAction('reaction', 'post', {
@@ -81,7 +78,7 @@ export function PostCard({
     });
     
     onReaction(post.id, type);
-  }, [post.id, post.author.id, onReaction, scaleValue]);
+  }, [post.id, post.author.id, onReaction, cardAnimation]);
 
   const handleComment = useCallback(() => {
     AnalyticsManager.trackUserAction('comment', 'post', {
@@ -123,8 +120,12 @@ export function PostCard({
     .slice(0, showAllReactions ? 6 : 3);
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      <View style={styles.card}>
+    <Animated.View style={[styles.container, cardAnimation.animatedStyle]}>
+      <View style={[styles.card, { 
+        backgroundColor: theme.surface.container,
+        borderRadius: theme.radius.lg,
+        ...theme.elevation[1],
+      }]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity 
@@ -139,18 +140,25 @@ export function PostCard({
             />
             <View style={styles.userInfo}>
               <View style={styles.nameContainer}>
-                <Text style={styles.userName} numberOfLines={1}>
+                <Text style={[styles.userName, { 
+                  color: theme.text.primary,
+                  fontFamily: theme.typography.fontFamily,
+                  fontWeight: theme.typography.weights.semibold,
+                }]} numberOfLines={1}>
                   {post.author.name}
                 </Text>
                 {post.author.isVerified && (
-                  <View style={styles.verifiedBadge}>
+                  <View style={[styles.verifiedBadge, { backgroundColor: theme.color.warning[50] }]}>
                     <Crown size={12} color="#FFD700" />
                   </View>
                 )}
               </View>
               <View style={styles.glowContainer}>
                 <Sparkles size={12} color="#FFD700" />
-                <Text style={styles.glowPoints}>
+                <Text style={[styles.glowPoints, { 
+                  color: theme.text.muted,
+                  fontFamily: theme.typography.fontFamily,
+                }]}>
                   {post.author.glowPoints} Glow Points
                 </Text>
               </View>
@@ -158,13 +166,16 @@ export function PostCard({
           </TouchableOpacity>
           
           <View style={styles.headerRight}>
-            <Text style={styles.timestamp}>{post.timestamp}</Text>
+            <Text style={[styles.timestamp, { 
+              color: theme.text.muted,
+              fontFamily: theme.typography.fontFamily,
+            }]}>{post.timestamp}</Text>
             {onOptionsPress && (
               <TouchableOpacity 
                 style={styles.optionsButton}
                 onPress={handleOptionsPress}
               >
-                <MoreHorizontal size={20} color="#6B7280" />
+                <MoreHorizontal size={20} color={theme.text.muted} />
               </TouchableOpacity>
             )}
           </View>
@@ -172,7 +183,12 @@ export function PostCard({
 
         {/* Content */}
         {post.content && (
-          <Text style={styles.content}>{post.content}</Text>
+          <Text style={[styles.content, { 
+            color: theme.text.primary,
+            fontFamily: theme.typography.fontFamily,
+            fontSize: theme.typography.body.md,
+            lineHeight: theme.typography.body.md * theme.typography.lineHeights.relaxed,
+          }]}>{post.content}</Text>
         )}
 
         {/* Media */}
@@ -186,8 +202,15 @@ export function PostCard({
         {/* Reactions Summary */}
         {post.glowPoints > 0 && (
           <View style={styles.reactionsContainer}>
-            <View style={[styles.pointsGradient, { backgroundColor: '#2B2E78' }]}>
-              <Text style={styles.totalPoints}>+{post.glowPoints} Glow Points</Text>
+            <View style={[styles.pointsGradient, { 
+              backgroundColor: theme.color.brand[600],
+              borderRadius: theme.radius.xl,
+            }]}>
+              <Text style={[styles.totalPoints, { 
+                color: theme.text.inverted,
+                fontFamily: theme.typography.fontFamily,
+                fontWeight: theme.typography.weights.semibold,
+              }]}>+{post.glowPoints} Glow Points</Text>
             </View>
             
             {topReactions.length > 0 && (
@@ -215,10 +238,17 @@ export function PostCard({
                 
                 {Object.keys(post.reactions).filter(k => post.reactions[k] > 0).length > 3 && (
                   <TouchableOpacity
-                    style={styles.moreReactionsButton}
+                    style={[styles.moreReactionsButton, { 
+                      backgroundColor: theme.surface.elevated,
+                      borderRadius: theme.radius.xl,
+                    }]}
                     onPress={() => setShowAllReactions(!showAllReactions)}
                   >
-                    <Text style={styles.moreReactionsText}>
+                    <Text style={[styles.moreReactionsText, { 
+                      color: theme.text.muted,
+                      fontFamily: theme.typography.fontFamily,
+                      fontWeight: theme.typography.weights.medium,
+                    }]}>
                       {showAllReactions ? 'Moins' : 'Plus'}
                     </Text>
                   </TouchableOpacity>
@@ -231,33 +261,50 @@ export function PostCard({
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.surface.elevated }]}
+            style={[styles.actionButton, { 
+              backgroundColor: theme.surface.elevated,
+              borderRadius: theme.radius.lg,
+            }]}
             onPress={handleComment}
             accessibilityLabel="Commenter ce post"
           >
             <MessageSquare size={18} color={theme.text.muted} />
             {post.replyCount > 0 && (
-              <Text style={[styles.actionCount, { color: theme.text.muted }]}>
+              <Text style={[styles.actionCount, { 
+                color: theme.text.muted,
+                fontFamily: theme.typography.fontFamily,
+                fontWeight: theme.typography.weights.semibold,
+              }]}>
                 {post.replyCount}
               </Text>
             )}
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.surface.elevated }]}
+            style={[styles.actionButton, { 
+              backgroundColor: theme.surface.elevated,
+              borderRadius: theme.radius.lg,
+            }]}
             onPress={handleShare}
             accessibilityLabel="Partager ce post"
           >
             <Share2 size={18} color={theme.text.muted} />
             {post.shareCount > 0 && (
-              <Text style={[styles.actionCount, { color: theme.text.muted }]}>
+              <Text style={[styles.actionCount, { 
+                color: theme.text.muted,
+                fontFamily: theme.typography.fontFamily,
+                fontWeight: theme.typography.weights.semibold,
+              }]}>
                 {post.shareCount}
               </Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.viewCount}>
-            <Text style={[styles.viewCountText, { color: theme.text.muted }]}>
+            <Text style={[styles.viewCountText, { 
+              color: theme.text.muted,
+              fontFamily: theme.typography.fontFamily,
+            }]}>
               {post.viewCount} vues
             </Text>
           </View>
@@ -287,35 +334,38 @@ function ReactionButton({
   active, 
   onPress 
 }: ReactionButtonProps) {
-  const scale = useSharedValue(1);
+  const { theme } = useTheme();
+  const buttonAnimation = useButtonAnimation();
   
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   const handlePress = useCallback(() => {
-    scale.value = withSpring(1.2, {}, () => {
-      scale.value = withSpring(1);
-    });
+    buttonAnimation.celebrate();
     onPress();
-  }, [onPress, scale]);
+  }, [onPress, buttonAnimation]);
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={buttonAnimation.animatedStyle}>
       <TouchableOpacity
         style={[
           styles.reactionButton,
-          { borderColor: active ? color : '#E5E7EB' },
-          active && { backgroundColor: color + '20' }
+          { 
+            borderColor: active ? color : theme.surface.border,
+            backgroundColor: active ? color + '20' : theme.surface.container,
+            borderRadius: theme.radius.xl,
+          },
         ]}
         onPress={handlePress}
         accessibilityLabel={`${label}: ${count}`}
         accessibilityRole="button"
       >
-        <Icon size={16} color={active ? color : '#6B7280'} />
+        <Icon size={16} color={active ? color : theme.text.muted} />
         <Text style={[
           styles.reactionCount,
-          { color: active ? color : '#6B7280' }
+          { 
+            color: active ? color : theme.text.muted,
+            fontFamily: theme.typography.fontFamily,
+            fontWeight: theme.typography.weights.semibold,
+          }
         ]}>
           {count}
         </Text>
@@ -326,22 +376,15 @@ function ReactionButton({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 12, // Reduced spacing for better density
+    marginBottom: 16, // Using theme spacing
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 12, // Using md radius from design system
-    padding: 16, // Maintaining lg spacing
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, // Lighter shadow as per design
-    shadowRadius: 6,
-    elevation: 3,
+    padding: 20, // Using xl spacing for generous padding
   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16, // Using lg spacing
+    marginBottom: 16,
   },
   userSection: {
     flexDirection: 'row',
@@ -352,7 +395,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    marginRight: 16, // Using lg spacing
+    marginRight: 16,
   },
   userInfo: {
     flex: 1,
@@ -363,113 +406,94 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
     maxWidth: 150,
   },
   verifiedBadge: {
-    marginLeft: 8, // Using sm spacing
+    marginLeft: 8,
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
   },
   glowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4, // Using xs spacing
+    marginTop: 4,
   },
   glowPoints: {
     fontSize: 12,
-    color: '#6B7280',
-    marginLeft: 8, // Using sm spacing
+    marginLeft: 8,
   },
   headerRight: {
     alignItems: 'flex-end',
   },
   timestamp: {
     fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 8, // Using sm spacing
+    marginBottom: 8,
   },
   optionsButton: {
-    padding: 8, // Using sm spacing for better touch target
+    padding: 8,
   },
   content: {
     fontSize: 15,
-    color: '#374151',
-    lineHeight: 22,
-    marginBottom: 16, // Using lg spacing
+    marginBottom: 16,
   },
   reactionsContainer: {
-    marginBottom: 16, // Using lg spacing
+    marginBottom: 16,
   },
   pointsGradient: {
-    paddingHorizontal: 16, // Using lg spacing
-    paddingVertical: 8, // Using sm spacing
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     alignSelf: 'flex-start',
-    marginBottom: 12, // Using md spacing
+    marginBottom: 12,
   },
   totalPoints: {
     fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
   },
   reactionsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12, // Using md spacing
+    gap: 12,
   },
   reactionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16, // Using lg spacing
-    paddingVertical: 8, // Using sm spacing
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderWidth: 1,
-    backgroundColor: '#F9FAFB',
   },
   reactionCount: {
     fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 8, // Using sm spacing
+    marginLeft: 8,
   },
   moreReactionsButton: {
-    paddingHorizontal: 16, // Using lg spacing
-    paddingVertical: 8, // Using sm spacing
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   moreReactionsText: {
     fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 0,
-    paddingTop: 16, // Using lg spacing
+    paddingTop: 16,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 12, // Using md spacing
-    borderRadius: 16,
-    minWidth: 44, // Accessibility minimum touch target
+    paddingVertical: 12,
+    minWidth: 44,
   },
   actionCount: {
     fontSize: 14,
-    marginLeft: 8, // Using sm spacing
-    fontWeight: '600',
+    marginLeft: 8,
   },
   viewCount: {
-    paddingHorizontal: 12, // Using md spacing
+    paddingHorizontal: 12,
   },
   viewCountText: {
     fontSize: 12,
