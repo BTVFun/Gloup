@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase-client';
-import { realtimeManager } from '@/lib/realtime-manager';
+import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme-context';
 
 type Message = {
@@ -76,8 +75,14 @@ export default function ChatScreen() {
     })();
 
     // Écouter les nouveaux messages
-    const channelId = realtimeManager.subscribeToDirectMessages(user?.id || '', (payload) => {
-      if (payload.new.sender_id === receiverId || payload.new.receiver_id === receiverId) {
+    const channel = supabase
+      .channel(`chat-${user?.id}-${receiverId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `or(and(sender_id.eq.${user?.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${user?.id}))`
+      }, (payload) => {
         const newMsg = payload.new as any;
         if (isMounted) {
           setMessages(prev => [...prev, {
@@ -86,12 +91,12 @@ export default function ChatScreen() {
           }]);
           listRef.current?.scrollToEnd({ animated: true });
         }
-      }
-    });
+      })
+      .subscribe();
 
     return () => {
       isMounted = false;
-      realtimeManager.unsubscribe(channelId);
+      supabase.removeChannel(channel);
     };
   }, [receiverId]);
 

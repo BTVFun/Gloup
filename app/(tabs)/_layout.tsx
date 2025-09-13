@@ -90,24 +90,6 @@ export default function TabLayout() {
               href: null
             }} 
           />
-          <Tabs.Screen 
-            name="search" 
-            options={{ 
-              href: null
-            }} 
-          />
-          <Tabs.Screen 
-            name="notifications" 
-            options={{ 
-              href: null
-            }} 
-          />
-          <Tabs.Screen 
-            name="profile/[id]" 
-            options={{ 
-              href: null
-            }} 
-          />
         </Tabs>
       </View>
     </TabBarScrollProvider>

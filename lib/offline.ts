@@ -178,18 +178,6 @@ export class OfflineManager {
         await this.executeJoinGroup(action.data);
         break;
       
-      case 'follow_user':
-        await this.executeFollowUser(action.data);
-        break;
-      
-      case 'add_comment':
-        await this.executeAddComment(action.data);
-        break;
-      
-      case 'report_post':
-        await this.executeReportPost(action.data);
-        break;
-      
       default:
         throw new Error(`Unknown action type: ${action.type}`);
     }
@@ -226,24 +214,6 @@ export class OfflineManager {
   // Execute join group action
   private async executeJoinGroup(data: any): Promise<void> {
     const { error } = await supabase.from('group_members').insert(data);
-    if (error) throw error;
-  }
-
-  // Execute follow user action
-  private async executeFollowUser(data: any): Promise<void> {
-    const { error } = await supabase.from('follows').insert(data);
-    if (error) throw error;
-  }
-
-  // Execute add comment action
-  private async executeAddComment(data: any): Promise<void> {
-    const { error } = await supabase.from('comments').insert(data);
-    if (error) throw error;
-  }
-
-  // Execute report post action
-  private async executeReportPost(data: any): Promise<void> {
-    const { error } = await supabase.from('post_reports').insert(data);
     if (error) throw error;
   }
 
@@ -364,30 +334,6 @@ export const OfflineActions = {
     data: groupData,
     timestamp: Date.now(),
     maxRetries: 3,
-    priority,
-  }),
-
-  followUser: (followerId: string, followeeId: string, priority: 'high' | 'medium' | 'low' = 'medium') => ({
-    type: 'follow_user',
-    data: { follower_id: followerId, followee_id: followeeId },
-    timestamp: Date.now(),
-    maxRetries: 3,
-    priority,
-  }),
-
-  addComment: (commentData: any, priority: 'high' | 'medium' | 'low' = 'high') => ({
-    type: 'add_comment',
-    data: commentData,
-    timestamp: Date.now(),
-    maxRetries: 3,
-    priority,
-  }),
-
-  reportPost: (reportData: any, priority: 'high' | 'medium' | 'low' = 'medium') => ({
-    type: 'report_post',
-    data: reportData,
-    timestamp: Date.now(),
-    maxRetries: 2,
     priority,
   }),
 };

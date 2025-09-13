@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { PostCard } from '@/components/ui/PostCard';
-import { PostCardSkeleton } from '@/components/ui/SkeletonLoader';
+import { CustomHeader } from '@/components/ui/CustomHeader';
 import { useFeed } from '@/hooks/useFeed';
 import { useTabBarScrollContext } from '@/contexts/TabBarScrollContext';
 import { AnalyticsManager } from '@/lib/analytics';
@@ -48,8 +48,8 @@ export default function GlowFeed() {
   const renderFooter = () => {
     if (!loading || posts.length === 0) return null;
     return (
-      <View style={[styles.footer, { backgroundColor: theme.surface.background }]}>
-        <PostCardSkeleton />
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Chargement...</Text>
       </View>
     );
   };
@@ -57,35 +57,17 @@ export default function GlowFeed() {
   const renderEmpty = () => {
     if (loading) return null;
     return (
-      <View style={[styles.empty, { backgroundColor: theme.surface.background }]}>
-        <Text style={[styles.emptyTitle, { 
-          color: theme.text.secondary,
-          fontFamily: theme.typography.fontFamily,
-          fontWeight: theme.typography.weights.semibold,
-        }]}>Aucun post à afficher</Text>
-        <Text style={[styles.emptyText, { 
-          color: theme.text.muted,
-          fontFamily: theme.typography.fontFamily,
-        }]}>
+      <View style={styles.empty}>
+        <Text style={styles.emptyTitle}>Aucun post à afficher</Text>
+        <Text style={styles.emptyText}>
           Soyez le premier à partager quelque chose !
         </Text>
       </View>
     );
   };
 
-  const renderSkeleton = () => {
-    if (!loading || posts.length > 0) return null;
-    return (
-      <View style={[styles.skeletonContainer, { backgroundColor: theme.surface.background }]}>
-        <PostCardSkeleton />
-        <PostCardSkeleton />
-        <PostCardSkeleton />
-      </View>
-    );
-  };
   return (
     <View style={[styles.container, { backgroundColor: theme.surface.background }]}>
-      {loading && posts.length === 0 ? renderSkeleton() : (
       <FlashList
         data={posts}
         renderItem={renderPost}
@@ -101,7 +83,6 @@ export default function GlowFeed() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.listContent, { paddingTop: 60, paddingBottom: 100 }]}
       />
-      )}
 
     </View>
   );
@@ -118,21 +99,23 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     alignItems: 'center',
   },
+  footerText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
   empty: {
     paddingVertical: 60,
     alignItems: 'center',
   },
   emptyTitle: {
     fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
+    color: '#9CA3AF',
     textAlign: 'center',
-  },
-  skeletonContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 60,
   },
 });

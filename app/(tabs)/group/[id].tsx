@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { supabase } from '@/lib/supabase-client';
-import { realtimeManager } from '@/lib/realtime-manager';
+import { supabase } from '@/lib/supabase';
 
 type Msg = {
   id: string;
@@ -37,13 +36,16 @@ export default function GroupChatScreen() {
       setMessages(mapped);
     })();
 
-    const channelId = realtimeManager.subscribeToGroupMessages(id!, (payload) => {
+    const ch = supabase
+      .channel(`grp-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${id}` }, payload => {
         const m: any = payload.new;
         // On n'a pas le profil joint dans l'event, on ajoute minimalement
         setMessages(prev => [...prev, { id: m.id, content: m.content, created_at: m.created_at, sender: null }]);
         listRef.current?.scrollToEnd({ animated: true });
-    });
-    return () => { realtimeManager.unsubscribe(channelId); isMounted = false; };
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); isMounted = false; };
   }, [id]);
 
   async function send() {
