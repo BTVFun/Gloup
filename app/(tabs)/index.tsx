@@ -8,7 +8,7 @@ import { AnalyticsManager } from '@/lib/analytics';
 import { useEffect } from 'react';
 import { useTheme } from '@/lib/theme-context';
 
-export default function GlowFeed() {
+export default function IndexScreen() {
   const { theme } = useTheme();
   const { onScroll } = useTabBarScrollContext();
   const {
