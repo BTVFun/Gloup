@@ -83,7 +83,6 @@ export default function IndexScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.listContent, { paddingTop: 60, paddingBottom: 100 }]}
       />
-
     </View>
   );
 }
