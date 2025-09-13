@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Crown, MoreHorizontal, MessageCircle, UserX, VolumeX } from 'lucide-react-native';
+import { ArrowLeft, Crown, MoveHorizontal as MoreHorizontal, MessageCircle, UserX, VolumeX } from 'lucide-react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { FollowButton } from '@/components/ui/FollowButton';
 import { PostCard } from '@/components/ui/PostCard';
