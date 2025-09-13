@@ -1,6 +1,8 @@
 // Enhanced Feed Hook with Caching and Real-time Updates
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
+import { realtimeManager } from '@/lib/realtime-manager';
+import { dbOptimizer } from '@/lib/database-optimizer';
 import { CacheManager, CacheKeys } from '@/lib/cache';
 import { AnalyticsManager, PerformanceTracker } from '@/lib/analytics';
 import { OfflineManager, OfflineActions } from '@/lib/offline';
@@ -43,9 +45,8 @@ export function useFeed(options: UseFeedOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   
   const offsetRef = useRef(0);
-  const cache = CacheManager.getInstance();
+  const realtimeChannelRef = useRef<string | null>(null);
   const offlineManager = OfflineManager.getInstance();
-  const realtimeChannelRef = useRef<any>(null);
 
   // Generate cache key based on options
   const getCacheKey = useCallback(() => {
@@ -60,47 +61,17 @@ export function useFeed(options: UseFeedOptions = {}) {
     setError(null);
 
     try {
-      const cacheKey = getCacheKey();
+      // Use optimized database query
+      const { data: postsData, error: postsError, fromCache } = await dbOptimizer.getFeed(
+        userId,
+        category,
+        offset,
+        pageSize
+      );
       
-      // Try cache first for initial load
-      if (offset === 0 && !isRefresh) {
-        const cachedPosts = await cache.get<FeedPost[]>(cacheKey);
-        if (cachedPosts && cachedPosts.length > 0) {
-          setPosts(cachedPosts);
-          setLoading(false);
-          return;
-        }
+      if (fromCache) {
+        AnalyticsManager.trackEvent('feed_cache_hit', { offset, pageSize });
       }
-
-      // Track API performance
-      const apiStartTime = Date.now();
-
-      let query = supabase
-        .from('posts')
-        .select(`
-          id, content, media_url, glow_points, created_at,
-          profiles:author_id (
-            id, username, avatar_url, glow_points, is_verified
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + pageSize - 1);
-
-      // Apply filters
-      if (userId) {
-        query = query.eq('author_id', userId);
-      }
-      if (category) {
-        query = query.eq('category', category);
-      }
-      if (groupId) {
-        // For group posts, we'd need a different table or filter
-        query = query.eq('group_id', groupId);
-      }
-
-      const { data: postsData, error: postsError } = await query;
-      
-      AnalyticsManager.trackAPICall('/posts', 'GET', Date.now() - apiStartTime, postsError ? 500 : 200);
       
       if (postsError) throw postsError;
 
@@ -114,17 +85,14 @@ export function useFeed(options: UseFeedOptions = {}) {
       
       // Fetch reactions for these posts
       const postIds = postsData.map(p => p.id);
-      const [reactionsData, userReactionsData] = await Promise.all([
-        supabase
-          .from('reactions')
-          .select('post_id, kind')
-          .in('post_id', postIds),
-        user ? supabase
-          .from('reactions')
-          .select('post_id, kind')
-          .in('post_id', postIds)
-          .eq('user_id', user.id) : { data: [] }
-      ]);
+      
+      const { data: reactionsData } = await dbOptimizer.getPostReactions(postIds);
+      const { data: userReactionsData } = user ? await dbOptimizer.query({
+        table: 'reactions',
+        select: 'post_id, kind',
+        filters: { post_id: postIds, user_id: user.id },
+        useCache: false,
+      }) : { data: [] };
 
       // Process reactions
       const reactionMap = new Map<string, Record<string, number>>();
@@ -138,12 +106,12 @@ export function useFeed(options: UseFeedOptions = {}) {
         userReactionMap.set(id, []);
       });
 
-      reactionsData.data?.forEach((r: any) => {
+      reactionsData?.forEach((r: any) => {
         const reactions = reactionMap.get(r.post_id)!;
         reactions[r.kind] += 1;
       });
 
-      userReactionsData.data?.forEach((r: any) => {
+      userReactionsData?.forEach((r: any) => {
         const userReactions = userReactionMap.get(r.post_id)!;
         userReactions.push(r.kind);
       });
@@ -153,13 +121,13 @@ export function useFeed(options: UseFeedOptions = {}) {
         id: post.id,
         author: {
           id: post.profiles?.id || '',
-          name: post.profiles?.username || 'Utilisateur',
+          name: post.profiles?.full_name || post.profiles?.username || 'Utilisateur',
           avatar: post.profiles?.avatar_url || 'https://placehold.co/100x100/png',
           glowPoints: post.profiles?.glow_points || 0,
           isVerified: post.profiles?.is_verified || false,
         },
         content: post.content || '',
-        media_urls: post.media_url ? [post.media_url] : [],
+        media_urls: post.media_urls || (post.media_url ? [post.media_url] : []),
         media_metadata: {},
         glowPoints: post.glow_points || 0,
         reactions: reactionMap.get(post.id)!,
@@ -172,8 +140,6 @@ export function useFeed(options: UseFeedOptions = {}) {
 
       if (offset === 0) {
         setPosts(transformedPosts);
-        // Cache the fresh data
-        cache.set(cacheKey, transformedPosts, 300000); // 5 minutes
       } else {
         setPosts(prev => [...prev, ...transformedPosts]);
       }
@@ -194,7 +160,7 @@ export function useFeed(options: UseFeedOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [userId, category, groupId, pageSize, getCacheKey, cache, loading]);
+  }, [userId, category, groupId, pageSize, loading]);
 
   // Load more posts
   const loadMore = useCallback(async () => {
@@ -332,48 +298,40 @@ export function useFeed(options: UseFeedOptions = {}) {
 
     const postIds = posts.map(p => p.id);
     
-    const channel = supabase
-      .channel('feed-reactions')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'reactions',
-        filter: `post_id=in.(${postIds.join(',')})`
-      }, (payload) => {
-        const { eventType, new: newRecord, old: oldRecord } = payload;
-        const record = newRecord || oldRecord;
+    const channelId = realtimeManager.subscribeToPostReactions(postIds, (payload) => {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+      const record = newRecord || oldRecord;
         
-        setPosts(prev => prev.map(post => {
-          if (post.id === record.post_id) {
-            const newReactions = { ...post.reactions };
-            const points = record.kind === 'couronne' ? 20 : 10;
+      setPosts(prev => prev.map(post => {
+        if (post.id === record.post_id) {
+          const newReactions = { ...post.reactions };
+          const points = record.kind === 'couronne' ? 20 : 10;
             
-            if (eventType === 'INSERT') {
-              newReactions[record.kind] += 1;
-              return {
-                ...post,
-                reactions: newReactions,
-                glowPoints: post.glowPoints + points,
-              };
-            } else if (eventType === 'DELETE') {
-              newReactions[record.kind] = Math.max(0, newReactions[record.kind] - 1);
-              return {
-                ...post,
-                reactions: newReactions,
-                glowPoints: Math.max(0, post.glowPoints - points),
-              };
-            }
+          if (eventType === 'INSERT') {
+            newReactions[record.kind] += 1;
+            return {
+              ...post,
+              reactions: newReactions,
+              glowPoints: post.glowPoints + points,
+            };
+          } else if (eventType === 'DELETE') {
+            newReactions[record.kind] = Math.max(0, newReactions[record.kind] - 1);
+            return {
+              ...post,
+              reactions: newReactions,
+              glowPoints: Math.max(0, post.glowPoints - points),
+            };
           }
-          return post;
-        }));
-      })
-      .subscribe();
+        }
+        return post;
+      }));
+    });
 
-    realtimeChannelRef.current = channel;
+    realtimeChannelRef.current = channelId;
 
     return () => {
       if (realtimeChannelRef.current) {
-        supabase.removeChannel(realtimeChannelRef.current);
+        realtimeManager.unsubscribe(realtimeChannelRef.current);
       }
     };
   }, [posts]);

@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput,
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, MessageCircle, Users, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
+import { realtimeManager } from '@/lib/realtime-manager';
 import { router } from 'expo-router';
 import { useTabBarScrollContext } from '@/contexts/TabBarScrollContext';
 import { useTheme } from '@/lib/theme-context';
@@ -135,14 +136,15 @@ export default function MessagesScreen() {
   useEffect(() => { loadConversations(); }, []);
 
   useEffect(() => {
-    const ch = supabase
-      .channel('grp-list-activity')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, (payload) => {
+    const channelId = realtimeManager.subscribe('group-activity', {
+      table: 'group_messages',
+      event: 'INSERT',
+      callback: (payload) => {
         const gId = (payload.new as any).group_id as string;
         setGroups(prev => prev.map(g => g.id === gId ? { ...g, lastActivity: "à l'instant" } : g));
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+      },
+    });
+    return () => realtimeManager.unsubscribe(channelId);
   }, []);
 
   async function join(groupId: string) {
